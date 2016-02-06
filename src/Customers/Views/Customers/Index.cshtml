@@ -9,8 +9,22 @@
 </head>
 <body>
 
-    <div id="dialog_window_1" class="dialog_window" title="Это наше первое диалоговое окно">
-        <p>Привет, мир!</p>
+    <div id="dialog_newcustomer" title="Create new customer"  style="display:none;">
+        <p>
+            Name: @Html.TextBox("Name")
+        </p>       
+        Business type:
+        <select id="BusinessType">
+            @foreach (var e in ViewBag.BusinessTypes)
+            {
+                <option>@e.BusinessTypeName</option>
+            }          
+         </select>
+                 
+        <p>
+            <input type="button" value="Записать" onclick="NewCustomer()" />
+        </p>
+                
     </div>
 
     <h1>@ViewBag.Title</h1>
@@ -20,25 +34,25 @@
         <div>Нет данных для отображения</div>
 
     }
-    else { 
-    <table>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Edit</th>
-            <th>Delete</th>
-        </tr>
-        @foreach (var e in Model)
-        {
+    else {
+        <table>
             <tr>
-                
-                <td>@e.CustomerName</td>
-                <td>@e.BusinessType.BusinessTypeName</td>
-                <td><input type="button" value="Edit" onclick="EditClick()" /></td>
-                <td><input type="button" value="Delete" onclick="location.href=@Url.Action("Delete", "Customers" )" />
+                <th>Name</th>
+                <th>Type</th>
+                <th>Edit</th>
+                <th>Delete</th>
             </tr>
-        }
-    </table>
+            @foreach (var e in Model)
+            {
+                <tr>
+
+                    <td>@e.CustomerName</td>
+                    <td>@e.BusinessType.BusinessTypeName</td>
+                    <td><input type="button" value="Edit" onclick="EditClick()" /></td>
+                    <td><input type="button" value="Delete" onclick="location.href=@Url.Action("Delete", "Customers" )" />
+                </tr>
+            }
+        </table>
     }
     <script type="text/javascript" language="javascript">
         function EditClick() {
@@ -50,13 +64,13 @@
         function NewClick() {
 
             $(document).ready(function () {
-                $('#dialog_window_1').dialog();
+                $('#dialog_newcustomer').dialog();
             });
-
-        };
+        }
+            function NewCustomer() {
+                alert("test");
+            };
+        
     </script>
-
-
-
 </body>
 </html>

@@ -30,6 +30,8 @@ namespace Customers.Controllers
         public IActionResult Index()
         {
             ViewBag.Title = "Customers";
+            ViewBag.BusinessTypes = (from type in _ctx.BusinessTypes
+                                     select type).ToList();
             return View(GetCustomers());
         }
 
