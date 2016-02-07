@@ -8,70 +8,94 @@
     <title>@ViewBag.Title</title>
 </head>
 <body>
-
-    <div id="dialog_newcustomer" title="Create new customer"  style="display:none;">
-        <p>
-            Name: @Html.TextBox("Name")
-        </p>       
-        Business type:
-        <select id="BusinessType">
-            @foreach (var e in ViewBag.BusinessTypes)
-            {
-                <option>@e.BusinessTypeName</option>
-            }          
-         </select>
-                 
-        <p>
-            <input type="button" value="Записать" onclick="NewCustomer()" />
-
-        </p>
-                
-    </div>
-
+    
     <h1>@ViewBag.Title</h1>
     <input type="button" value="New" onclick="NewClick()" />
-    @if (Model.Count() == 0)
-    {
-        <div>Нет данных для отображения</div>
+    
+    <div id="CustomersTable">
+        @Html.Partial("_table", Model)
+    </div>
 
-    }
-    else {
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Edit</th>
-                <th>Delete</th>
-            </tr>
-            @foreach (var e in Model)
-            {
-                <tr>
+        @*Adding new customer dialog*@
+        <div id="dialog_newcustomer" title="Create new customer" style="display:none;">
+            <form method="POST" id="form_newcustomer" action="javascript:void(null);" onsubmit="NewCustomer()">
+                Name: @Html.TextBox("CustomerName", "")
+                Business type:
+                <select name="BusinessTypeName">
+                    @foreach (var e in ViewBag.BusinessTypes)
+                    {
+                        <option>@e.BusinessTypeName</option>
+                    }
+                </select>
+                <input type="submit" value="Записать" />
+                <div id="dialog_newcustomer_divmsg"></div>
+            </form>
+        </div>
 
-                    <td>@e.CustomerName</td>
-                    <td>@e.BusinessType.BusinessTypeName</td>
-                    <td><input type="button" value="Edit" onclick="EditClick()" /></td>
-                    <td><input type="button" value="Delete" onclick="location.href=@Url.Action("Delete", "Customers" )" />
-                </tr>
-            }
-        </table>
-    }
-    <script type="text/javascript" language="javascript">
-        function EditClick() {
-            $(function () {
-                $("#dialog_window_1").dialog();
-            });
-        };
 
-        function NewClick() {
+        <script type="text/javascript" language="javascript">
 
-            $(document).ready(function () {
-                $('#dialog_newcustomer').dialog();
-            });
-        }
-            function NewCustomer() {
-                alert("test");
+        @*Press Edit button in Customers table*@
+            function EditClick() {
+                $(function () {
+                    $("#dialog_window_1").dialog();
+                });
             };
-        
-    </script>
+
+            @*Press New button*@
+            function NewClick() {
+
+                $(document).ready(function () {
+                    $('#dialog_newcustomer').dialog();
+                });
+            }
+
+            @*Create new  Customer*@
+            function NewCustomer() {
+
+
+                @*validation form on client side*@
+                var errors = "";
+                if ($("#form_newcustomer input[name='CustomerName']").val().length == 0) {
+                    errors = "Не задано имя контрагента";
+                }
+                if ($("#form_newcustomer select[name='BusinessTypeName']").val().length == 0) {
+                    errors = errors + (errors.length == 0 ? '' : '\n') + "Не задан тип контрагента";
+                }
+
+                var myDiv = document.getElementById("dialog_newcustomer_divmsg");
+
+                if (errors.length != 0) {
+                    myDiv.innerHTML = errors;
+                    return;
+                }
+                else
+                    myDiv.innerHTML = "";
+
+
+                var msg = $('#form_newcustomer').serialize();
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("Add", "Customers")',
+                    data: msg,
+                    success: function (data) {
+                        if (data["isOk"]){
+                        $('#dialog_newcustomer').hide();
+                        $('#CustomersTable').html(data["view"]);
+                        }
+                        else {
+                            var myDiv = document.getElementById("dialog_newcustomer_divmsg");
+                            myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                        }
+                    },
+                    error: function (xhr, str) {
+                        var myDiv = document.getElementById("dialog_newcustomer_divmsg");
+                        myDiv.innerHTML = "Ошибка записи: " + xhr.responseCode;
+                    }
+                });
+
+            }
+
+        </script>
 </body>
 </html>
