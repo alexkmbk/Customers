@@ -10,6 +10,8 @@ using Microsoft.AspNet.Mvc.ViewEngines;
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.AspNet.Mvc.ViewFeatures;
 using Microsoft.Data.Entity;
+using Npgsql;
+using Dapper;
 
 // For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -18,10 +20,12 @@ namespace Customers.Controllers
     public class Customers : Controller
     {
         private readonly ApplicationDbContext _ctx;
+        private readonly DapperConnection _dctx;
 
-        public Customers(ApplicationDbContext ctx)
+        public Customers(ApplicationDbContext ctx, DapperConnection dctx)
         {
             _ctx = ctx;
+            _dctx = dctx;
         }
 
         private List<Customer> GetCustomers()
@@ -29,12 +33,17 @@ namespace Customers.Controllers
             /*List<Customer> res = (from cust in _ctx.Customers
                                  select cust).ToList();*/
 
-            List<Customer> res = _ctx.Customers.ToList();
+            //List<Customer> res = _ctx.Customers.ToList();
+
+            NpgsqlConnection cn = new NpgsqlConnection("Server=127.0.0.1;Port=5432;Database=Customers;User Id=postgres;Password=123;MaxPoolSize=100;");
+            cn.Open();
+            var res = cn.Query<Customer, BusinessType, Customer>("select * from \"Customer\" as \"Customer\" left join \"BusinessType\" as \"BusinessType\" on \"Customer\".\"BusinessTypeBusinessTypeId\" = \"BusinessType\".\"BusinessTypeId\"", (customer, businessType)=> { customer.BusinessType = businessType; return customer; }, splitOn: "BusinessTypeId");
+            //List<Customer> res = _dctx._cn.Query<Customer>();
 
             /*List<Customer> res = from cust in _ctx.Customers
                                  join type in _ctx.BusinessTypes on cust.BusinessType equals type.BusinessTypeId into gj
                                  select new Customer({ CustomerId = cust.CustomerId, CustomerName = cust.CustomerName, PetName = (subpet == null ? String.Empty : subpet.Name) });*/
-            return res;
+            return (List<Customer>)res;
         }
 
         // GET: /<controller>/
@@ -62,8 +71,10 @@ namespace Customers.Controllers
                 _ctx.SaveChanges();
 
             }
-            var cust =  GetCustomers();
-            return View("Index", cust);
+            ViewBag.Title = "Customers";
+            ViewBag.BusinessTypes = (from type in _ctx.BusinessTypes
+                                     select type).ToList();
+            return View("Index", GetCustomers());
         }
 
         [HttpPost]
@@ -88,6 +99,26 @@ namespace Customers.Controllers
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
             return Json(new { isOk = true, Errors = "", view= RenderPartialViewToString("_table", GetCustomers())});
             
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult Update(string CustomerName, string BusinessTypeName)
+        {
+            var businessType = _ctx.BusinessTypes.FirstOrDefault(e => e.BusinessTypeName == BusinessTypeName);
+            if (businessType == null)
+            {
+                return Json(new { isOk = false, Errors = "Не удалось получить BusinessType" });
+            }
+            Customer customer = new Customer();
+            customer.CustomerName = CustomerName;
+            customer.BusinessType = businessType;
+            _ctx.Customers.Update(customer);
+            _ctx.SaveChanges();
+
+            Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_table", GetCustomers()) });
+
         }
 
         public string RenderPartialViewToString(string viewName, object model)

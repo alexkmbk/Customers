@@ -6,6 +6,7 @@
   },
 
   "dependencies": {
+    "Dapper": "1.50.0-beta7",
     "EntityFramework.Commands": "7.0.0-rc1-final",
     "EntityFramework7.Npgsql": "3.1.0-rc1-3",
     "Microsoft.AspNet.Authentication.Cookies": "1.0.0-rc1-final",
@@ -33,7 +34,11 @@
   },
 
   "frameworks": {
-    "dnx451": { },
+    "dnx451": {
+      "dependencies": {
+        "Dapper.Rainbow.PostgreSql": "0.7.1"
+      }
+    },
     "dnxcore50": { }
   },
 

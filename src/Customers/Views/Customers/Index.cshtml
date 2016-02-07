@@ -32,13 +32,30 @@
             </form>
         </div>
 
+    @*Editing customer dialog*@
+    <div id="dialog_editcustomer" title="Edit customer" style="display:none;">
+        <form method="POST" id="form_editcustomer" action="javascript:void(null);" onsubmit="EditCustomer()">
+            Name: @Html.TextBox("CustomerName", "")
+            Business type:
+            <select name="BusinessTypeName">
+                @foreach (var e in ViewBag.BusinessTypes)
+                {
+                    <option>@e.BusinessTypeName</option>
+                }
+            </select>
+            <input type="submit" value="Записать" />
+            <div id="dialog_editcustomer_divmsg"></div>
+        </form>
+    </div>
 
         <script type="text/javascript" language="javascript">
 
         @*Press Edit button in Customers table*@
-            function EditClick() {
+            function EditClick(CustomerName, BusinessTypeName) {
                 $(function () {
-                    $("#dialog_window_1").dialog();
+                    $("#dialog_editcustomer input[name='CustomerName']").val(CustomerName);
+                    $("#dialog_editcustomer select[name='BusinessTypeName']").val(BusinessTypeName);
+                    $("#dialog_editcustomer").dialog();
                 });
             };
 
@@ -90,6 +107,47 @@
                     },
                     error: function (xhr, str) {
                         var myDiv = document.getElementById("dialog_newcustomer_divmsg");
+                        myDiv.innerHTML = "Ошибка записи: " + xhr.responseCode;
+                    }
+                });
+
+            }
+
+            @*Edit Customer*@
+            function EditCustomer() {
+                               @*validation form on client side*@
+                var errors = "";
+                if ($("#form_editcustomer input[name='CustomerName']").val().length == 0) {
+                    errors = "Не задано имя контрагента";
+                }
+   
+                var myDiv = document.getElementById("dialog_editcustomer_divmsg");
+
+                if (errors.length != 0) {
+                    myDiv.innerHTML = errors;
+                    return;
+                }
+                else
+                    myDiv.innerHTML = "";
+
+
+                var msg = $('#form_editcustomer').serialize();
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("Update", "Customers")',
+                    data: msg,
+                    success: function (data) {
+                        if (data["isOk"]){
+                            $('#dialog_editcustomer').hide();
+                            $('#CustomersTable').html(data["view"]);
+                        }
+                        else {
+                            var myDiv = document.getElementById("dialog_editcustomer_divmsg");
+                            myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                        }
+                    },
+                    error: function (xhr, str) {
+                        var myDiv = document.getElementById("dialog_editcustomer_divmsg");
                         myDiv.innerHTML = "Ошибка записи: " + xhr.responseCode;
                     }
                 });

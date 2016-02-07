@@ -55,6 +55,9 @@ namespace Customers
             services.AddTransient<ISmsSender, AuthMessageSender>();
 
             services.AddTransient<DataInitializer>();
+
+            services.AddTransient<DapperConnection>();
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
