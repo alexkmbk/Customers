@@ -10,7 +10,9 @@
 <body>
     
     <h1>@ViewBag.Title</h1>
-    <input type="button" value="New" onclick="NewClick()"  style="width:100px"/>
+    <p>
+        <input type="button" value="New" onclick="NewClick()" style="width:100px" />
+    </p>
     
     <div id="CustomersTable">
         @Html.Partial("_table", Model)
