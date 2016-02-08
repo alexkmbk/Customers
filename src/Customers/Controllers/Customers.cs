@@ -20,13 +20,11 @@ namespace Customers.Controllers
     public class Customers : Controller
     {
         private readonly ApplicationDbContext _ctx;
-        private readonly DapperConnection _dctx;
-
-        public Customers(ApplicationDbContext ctx, DapperConnection dctx)
+  
+        public Customers(ApplicationDbContext ctx)
         {
             _ctx = ctx;
-            _dctx = dctx;
-        }
+         }
 
         private List<Customer> GetCustomers()
         {

@@ -1,5 +1,7 @@
 ﻿/// <autosync enabled="true" />
 /// <reference path="../gulpfile.js" />
+/// <reference path="jquery-ui-1.11.4.custom/external/jquery/jquery.js" />
+/// <reference path="jquery-ui-1.11.4.custom/jquery-ui.js" />
 /// <reference path="js/jquery-2.2.0.min.js" />
 /// <reference path="js/jquery-ui.js" />
 /// <reference path="js/site.js" />
