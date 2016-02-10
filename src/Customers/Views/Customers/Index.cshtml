@@ -23,7 +23,7 @@
         <form method="POST" id="form_customer" action="javascript:void(null);" onsubmit="SaveChanges()">
             <table>
                 <tr><th>Name:</th></tr>
-                <tr><td>@Html.TextBox("CustomerName", "")</td></tr>
+                <tr><td><input type="text" name="CustomerName" value="" autofocus/></td></tr>
                 <tr><td><input name="CustomerId" type="hidden"></td></tr>
                 <tr><th>Business type:</th></tr>
                     <tr><td>
@@ -129,6 +129,30 @@
 
             }
 
+            // Обработка ввода с клавиатуры
+            // нажатие ENTER в поле CustomerName - переход на следующее поле
+            $("#dialog_customer input[name='CustomerName']").keypress(function (e) {
+                if (e.keyCode == $.ui.keyCode.ENTER) {
+                    e.preventDefault();
+                    $("#dialog_customer select[name='BusinessTypeName']").focus();
+                }
+            });
+
+            // нажатие ENTER в поле BusinessTypeName - переход на кнопку submit
+            $("#dialog_customer select[name='BusinessTypeName']").keypress(function (e) {
+                if (e.keyCode == $.ui.keyCode.ENTER) {
+                    e.preventDefault();
+                    $("#dialog_customer input[type='submit']").focus();
+                }
+            });
+
+            // Если  нажато сочетание ctrl+Enter тогда сохраняем данные и закрываем диалог
+            $("#dialog_customer").keypress( function (e) {
+                if (e.ctrlKey && e.keyCode == 10) {
+                    e.preventDefault();
+                    SaveChanges();
+                }
+            });
         </script>
 </body>
 </html>
