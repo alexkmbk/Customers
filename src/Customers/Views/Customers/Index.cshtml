@@ -24,6 +24,7 @@
             <table>
                 <tr><th>Name:</th></tr>
                 <tr><td>@Html.TextBox("CustomerName", "")</td></tr>
+                <tr><td><input name="CustomerId" type="hidden"></td></tr>
                 <tr><th>Business type:</th></tr>
                     <tr><td>
                             <select name="BusinessTypeName">
@@ -47,14 +48,17 @@
         <script type="text/javascript" language="javascript">
 
         @*Press Edit button in Customers table*@
-            function EditClick(CustomerName, BusinessTypeName) {
+            function EditClick(CustomerId, CustomerName, BusinessTypeName) {
                 $(function () {
                     $("#dialog_customer input[name='CustomerName']").val(CustomerName);
+                    $("#dialog_customer input[name='CustomerId']").val(CustomerId);
                     $("#dialog_customer select[name='BusinessTypeName']").val(BusinessTypeName);
                     var dlg = document.getElementById('dialog_customer');
                     dlg.title = 'Editing customer';
                     // устанавливаем признак что запись уже существуе, просто редактируем
-                    dlg.setAttribute('isNew', false)
+                    dlg.setAttribute('isNew', false);
+                    // установим атрибут со значением ID чтобы обновить потом запись в БД
+                    dlg.setAttribute('CustomerId', CustomerId);
                     $("#dialog_customer").dialog();
                 });
             };

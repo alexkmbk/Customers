@@ -101,14 +101,19 @@ namespace Customers.Controllers
 
         [HttpPost]
         [Authorize]
-        public IActionResult Update(string CustomerName, string BusinessTypeName)
+        public IActionResult Update(int CustomerId, string CustomerName, string BusinessTypeName)
         {
             var businessType = _ctx.BusinessTypes.FirstOrDefault(e => e.BusinessTypeName == BusinessTypeName);
             if (businessType == null)
             {
                 return Json(new { isOk = false, Errors = "Не удалось получить BusinessType" });
             }
-            Customer customer = new Customer();
+
+            Customer customer = _ctx.Customers.FirstOrDefault(e => e.CustomerId == CustomerId);
+            if (customer == null)
+            {
+                return Json(new { isOk = false, Errors = "Не удалось получить Контрагента по ID" });
+            }
             customer.CustomerName = CustomerName;
             customer.BusinessType = businessType;
             _ctx.Customers.Update(customer);
