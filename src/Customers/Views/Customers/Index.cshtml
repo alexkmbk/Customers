@@ -55,7 +55,7 @@
                     $("#dialog_customer select[name='BusinessTypeName']").val(BusinessTypeName);
                     var dlg = document.getElementById('dialog_customer');
                     dlg.title = 'Editing customer';
-                    // устанавливаем признак что запись уже существуе, просто редактируем
+                    // устанавливаем признак что запись уже существует, просто редактируем
                     dlg.setAttribute('isNew', false);
                     // установим атрибут со значением ID чтобы обновить потом запись в БД
                     dlg.setAttribute('CustomerId', CustomerId);
@@ -66,11 +66,15 @@
             @*Press New button*@
             function NewClick() {
 
-                $(document).ready(function () {
-                     var dlg = document.getElementById('dialog_customer');
-                     dlg.title = 'Create new customer';
+                $(function () {
+                    var dlg = document.getElementById('dialog_customer');
+                    dlg.title = 'Create new customer';
                     // устанавливаем признак что запись новая
                     dlg.setAttribute('isNew', true);
+                    $("#dialog_customer input[name='CustomerName']").val("");
+                    $("#dialog_customer input[name='CustomerId']").val("");
+                    $("#dialog_customer select[name='BusinessTypeName']").val("");
+
                     $("#dialog_customer").dialog();
                 });
             }
@@ -92,8 +96,10 @@
                 else
                     myDiv.innerHTML = "";
 
+                @*Здесь по атрибуту isNew, определяется что это новая запись или уже существующая
+                    в зависимости от этого будет вызываться различный метод контроллера: Add или Update*@
                 var action;
-                if (document.getElementById('dialog_customer').getAttribute("isNew") == true) action = '@Url.Action("Add", "Customers")';
+                if (document.getElementById('dialog_customer').getAttribute("isNew") == "true") action = '@Url.Action("Add", "Customers")';
                 else action = '@Url.Action("Update", "Customers")';
 
                 var msg = $('#form_customer').serialize();
@@ -102,15 +108,19 @@
                     url: action,
                     data: msg,
                     success: function (data) {
-                        if (data["isOk"]){
+                        @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу CustomersTable*@
+                        if (data["isOk"]) {
                             $('#dialog_customer').dialog('close');
                             $('#CustomersTable').html(data["view"]);
                         }
                         else {
+                            @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
+                                расположенном здесь, же на форме диалога, чтобы пользователь мог видеть сообщение*@
                             var myDiv = document.getElementById("dialog_customer_divmsg");
                             myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
                         }
                     },
+                    // если запрос не удалось обработать
                     error: function (xhr, str) {
                         var myDiv = document.getElementById("dialog_customer_divmsg");
                         myDiv.innerHTML = "Ошибка записи: " + xhr.responseCode;

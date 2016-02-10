@@ -10,6 +10,8 @@ namespace Customers.Models
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        // В базе данных, кроме стандартных сведений о пользователях,
+        // будет 2 таблицы, Customers и BusinessTypes, связанных связью один ко многим
         public DbSet<Customer> Customers { get; set; }
         public DbSet<BusinessType> BusinessTypes { get; set; }
 
@@ -28,6 +30,7 @@ namespace Customers.Models
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             //options.UseSqlServer(@"Server=(localdb)\\MSSQLLocalDB;Database=_CHANGE_ME;Trusted_Connection=True;");
+            // Строка подключения к серверу БК Postgre SQL
             options.UseNpgsql(@"Server=127.0.0.1;Port=5432;Database=Customers;Integrated Security=true;User Id=postgres;Password=123;");
         }
     }

@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 
 namespace Customers.Controllers
 {
+    // Этот контроллер реализует станадртый функционал демо-примера, созданного мастером
     public class HomeController : Controller
     {
         public IActionResult Index()

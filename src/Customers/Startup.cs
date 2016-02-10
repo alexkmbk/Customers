@@ -99,7 +99,7 @@ namespace Customers
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Customers}/{action=Index}/{id?}");
+                    template: "{controller=Customers}/{action=Index}/{id?}"); // Выводим view Index, контроллера Customers
             });
 
             sampleData.InitializeData();

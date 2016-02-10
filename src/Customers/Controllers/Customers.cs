@@ -19,6 +19,7 @@ namespace Customers.Controllers
 {
     public class Customers : Controller
     {
+        // Контекст Entity Framework
         private readonly ApplicationDbContext _ctx;
   
         public Customers(ApplicationDbContext ctx)
@@ -28,20 +29,14 @@ namespace Customers.Controllers
 
         private List<Customer> GetCustomers()
         {
-            /*List<Customer> res = (from cust in _ctx.Customers
-                                 select cust).ToList();*/
-
-            //List<Customer> res = _ctx.Customers.ToList();
-
+ 
+            // Получаем данные из БД с помощью ORM Dapper
             NpgsqlConnection cn = new NpgsqlConnection("Server=127.0.0.1;Port=5432;Database=Customers;User Id=postgres;Password=123;MaxPoolSize=100;");
             cn.Open();
+            // Данные получаются левым соединением сразу из двух таблиц, используется маппинг сразу в два типа: Customer и BusinessType 
             var res = cn.Query<Customer, BusinessType, Customer>("select * from \"Customer\" as \"Customer\" left join \"BusinessType\" as \"BusinessType\" on \"Customer\".\"BusinessTypeBusinessTypeId\" = \"BusinessType\".\"BusinessTypeId\"", (customer, businessType)=> { customer.BusinessType = businessType; return customer; }, splitOn: "BusinessTypeId");
-            //List<Customer> res = _dctx._cn.Query<Customer>();
-
-            /*List<Customer> res = from cust in _ctx.Customers
-                                 join type in _ctx.BusinessTypes on cust.BusinessType equals type.BusinessTypeId into gj
-                                 select new Customer({ CustomerId = cust.CustomerId, CustomerName = cust.CustomerName, PetName = (subpet == null ? String.Empty : subpet.Name) });*/
-            return (List<Customer>)res;
+ 
+             return (List<Customer>)res;
         }
 
         // GET: /<controller>/
@@ -53,6 +48,7 @@ namespace Customers.Controllers
             return View("Index", GetCustomers());
         }
 
+        // Удаление записи о контрагенте по переданному ID
         [HttpPost]
         [Authorize]
         public IActionResult Delete(int CustomerId)
@@ -61,10 +57,6 @@ namespace Customers.Controllers
             var entity = _ctx.Customers.FirstOrDefault(e => e.CustomerId == CustomerId);
             if (entity != null)
             {
-                // Remove Entity
-                //_ctx.Customers.Attach(entity);
-                //_ctx.Customers.Remove(entity);
-                //_ctx.Entry(entity).State = EntityState.Deleted;
                 _ctx.Remove(entity);
                 _ctx.SaveChanges();
 
@@ -95,12 +87,15 @@ namespace Customers.Controllers
             _ctx.SaveChanges();
 
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
+            // контрагентов в виде строки
             return Json(new { isOk = true, Errors = "", view= RenderPartialViewToString("_table", GetCustomers())});
             
         }
 
         [HttpPost]
         [Authorize]
+        // Обновление данных контрагента
         public IActionResult Update(int CustomerId, string CustomerName, string BusinessTypeName)
         {
             var businessType = _ctx.BusinessTypes.FirstOrDefault(e => e.BusinessTypeName == BusinessTypeName);
@@ -124,6 +119,9 @@ namespace Customers.Controllers
 
         }
 
+        // Функция для формирования html кода по переданному шаблону вида и модели
+        // результат возвращается в виде строки
+        // это позволяет передавать готовый html код в ответ на ajax запросы с клиента
         public string RenderPartialViewToString(string viewName, object model)
         {
             if (string.IsNullOrEmpty(viewName))

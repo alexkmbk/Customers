@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace Customers.Models
 {
+    // Модель данных для хранения сведений о контрагентах и их типе (физ. лицо или юр. лицо)
     public class Customer
     {
         public int CustomerId { get; set; }

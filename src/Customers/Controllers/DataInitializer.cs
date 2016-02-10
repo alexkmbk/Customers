@@ -7,6 +7,7 @@ using Customers.Models;
 
 namespace Customers.Controllers
 {
+    // Класс для инициализации данных в БД при первом запуске
     public class DataInitializer
     {
         private ApplicationDbContext _ctx;
@@ -21,10 +22,13 @@ namespace Customers.Controllers
 
         public void InitializeData()
         {
+            // Получаем из таблицы BusinessTypes уже существующие записи с наименованием "Физ. лицо"
             var businesstypes = from bt in _ctx.BusinessTypes
                                 where bt.BusinessTypeName == "Физ. лицо"
                                 select bt;
 
+            // Если записи "Физ. лицо" еще нет, значит еще не добавляли, 
+            // поэтому добавляем в базу записи "Физ. лицо" и "Юр. лицо" 
             if (businesstypes.Count() == 0)
             {
                 _ctx.BusinessTypes.Add(new BusinessType { BusinessTypeName = "Физ. лицо" });
