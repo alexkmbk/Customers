@@ -10,11 +10,14 @@
 <body>
     
     <h1>@ViewBag.Title</h1>
-    <p>
-        <input type="button" value="New" onclick="NewClick()" style="width:100px" />
-    </p>
     
     <div id="CustomersTable">
+        @*Командная панель с кнопками управления таблицей*@
+        <p>
+            <input type="button" value="New" onclick="NewClick()" autofocus style="width:100px" />
+        </p>
+        @*Невидимый элемент ввода, для получения фокуса на таблицу, для клавиатурного ввода*@
+        <a id="CustomersTableInput" href="#CustomersTable"></a>
         @Html.Partial("_table", Model)
     </div>
 
@@ -153,6 +156,30 @@
                     SaveChanges();
                 }
             });
+
+            // Если отжали INSERT внутри командной панели таблицы
+            $('#CustomersTable input').on('keyup', function (e) {
+                if (e.keyCode == 45 ) {
+                    e.preventDefault();
+                    NewClick();
+                }
+            });
+
+            // Если отжали INSERT внутри таблицы
+            $('#CustomersTableInput').on('keyup', function (e) {
+                if (e.keyCode == 45) {
+                    e.preventDefault();
+                    NewClick();
+                }
+            });
+
+           // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
+            $("body").click(function (e) {
+                if (e.target.id == "CustomersTable" || $(e.target).parents("#CustomersTable").size()) {
+                    $("#CustomersTableInput").focus();
+                }
+            });
+
         </script>
 </body>
 </html>
