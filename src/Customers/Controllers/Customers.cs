@@ -88,7 +88,15 @@ namespace Customers.Controllers
                         System.IO.File.Delete(tmpFilePath);
                         DataTable products = data.Tables["Page1$"];
 
-                        var banks = data.Tables["Page1$"].Select().Where(p => !_ctx.Banks.Any(p2 => p2.BankName == p["BIC"].ToString()));
+                        // Отберем для добавления только те банки, БИК-ки которых еще не содежатся в базе
+                        var banks = data.Tables["Page1$"].Select().Where(p => !_ctx.Banks.Any(p2 => p2.BIC == p["BIC"].ToString()));
+
+                        // альтернативный запрос с аналогичным функционалом
+                        /*var banks = from newbank in data.Tables["Page1$"].Select()
+                                    where !(from b in _ctx.Banks
+                                            select b.BIC)
+                                            .Contains(newbank["BIC"].ToString())
+                                            select newbank;*/
 
                         foreach (var e in banks)
                         {
@@ -97,7 +105,7 @@ namespace Customers.Controllers
 
                     };
                 }
-                //_ctx.SaveChanges();
+                _ctx.SaveChanges();
             }
 
 
