@@ -12,6 +12,11 @@ using Microsoft.AspNet.Mvc.ViewFeatures;
 using Microsoft.Data.Entity;
 using Npgsql;
 using Dapper;
+using Microsoft.AspNet.Http;
+using Microsoft.Net.Http.Headers;
+
+using System.IO;
+using System.Data;
 
 // For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -39,6 +44,7 @@ namespace Customers.Controllers
              return (List<Customer>)res;
         }
 
+        // Список Customers
         // GET: /<controller>/
         public IActionResult Index()
         {
@@ -46,6 +52,56 @@ namespace Customers.Controllers
             ViewBag.BusinessTypes = (from type in _ctx.BusinessTypes
                                      select type).ToList();
             return View("Index", GetCustomers());
+        }
+
+        // Список BankAccounts
+        // GET: /<controller>/
+        public IActionResult BankAccounts()
+        {
+            ViewBag.Title = "Счета контрагентов";
+            return View("_BankAccounts", _ctx.BankAccounts.ToList());
+        }
+
+        // Список Banks
+        // GET: /<controller>/
+        public IActionResult Banks()
+        {
+            ViewBag.Title = "Банки";
+            return View("_Banks", _ctx.Banks.ToList());
+        }
+
+        // Список Banks
+        [HttpPost]
+        public IActionResult UploadBanks(ICollection<IFormFile> files)
+        {
+
+            foreach (var file in files)
+            {
+                if (file.Length > 0)
+                {
+                    var stream = file.OpenReadStream();
+                    {
+
+                        var tmpFilePath = Path.GetTempFileName();
+                        file.SaveAs(tmpFilePath);
+                        var data = common.LoadExcel(tmpFilePath);
+                        System.IO.File.Delete(tmpFilePath);
+                        DataTable products = data.Tables["Page1$"];
+
+                        var banks = data.Tables["Page1$"].Select().Where(p => !_ctx.Banks.Any(p2 => p2.BankName == p["BIC"].ToString()));
+
+                        foreach (var e in banks)
+                        {
+                            _ctx.Banks.Add(new Bank{BankName= e["Name"].ToString(), BIC= e["BIC"].ToString() });  
+                        }
+
+                    };
+                }
+                //_ctx.SaveChanges();
+            }
+
+
+            return View("_Banks", _ctx.Banks.ToList());
         }
 
         // Удаление записи о контрагенте по переданному ID

@@ -8,9 +8,10 @@ using Customers.Models;
 namespace Customers.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20160213035543_NewTables_BankAccount_Bank")]
+    partial class NewTables_BankAccount_Bank
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
             modelBuilder
                 .HasAnnotation("ProductVersion", "7.0.0-rc1-16348");
@@ -67,8 +68,6 @@ namespace Customers.Migrations
                 {
                     b.Property<int>("BankId")
                         .ValueGeneratedOnAdd();
-
-                    b.Property<string>("BIC");
 
                     b.Property<string>("BankName");
 

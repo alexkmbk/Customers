@@ -43,6 +43,9 @@
                         <li><a asp-controller="Home" asp-action="Index">Home</a></li>
                         <li><a asp-controller="Home" asp-action="About">About</a></li>
                         <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
+                        <li><a asp-controller="Customers" asp-action="Index">Контрагенты</a></li>
+                        <li><a asp-controller="Customers" asp-action="BankAccounts">Cчета контрагентов</a></li>
+                        <li><a asp-controller="Customers" asp-action="Banks">Банки</a></li>
                     </ul>
                     @await Html.PartialAsync("_LoginPartial")
                 </div>
