@@ -8,178 +8,310 @@
     <title>@ViewBag.Title</title>
 </head>
 <body>
-    
+
     <h1>@ViewBag.Title</h1>
-    
-    <div id="CustomersTable">
+
+    <div>
         @*Командная панель с кнопками управления таблицей*@
-        <p>
-            <input type="button" value="New" onclick="NewClick()" autofocus style="width:100px" />
-        </p>
+        <input type="button" value="Добавить" onclick="NewClick()" autofocus class="btn btn-default" />
+        <input type="button" value="Изменить" onclick="EditClick()" autofocus class="btn btn-default" />
+        <input type="button" value="Удалить" onclick="DeleteClick()" autofocus class="btn btn-default" />
+
         @*Невидимый элемент ввода, для получения фокуса на таблицу, для клавиатурного ввода*@
-        <a id="CustomersTableInput" href="#CustomersTable"></a>
+        <a id="customers_table_input" href="#customers_table"></a>
         @Html.Partial("_table", Model)
     </div>
 
     @*Customer dialog*@
     <div id="dialog_customer" title="Customer" style="display:none;">
         <form method="POST" id="form_customer" action="javascript:void(null);" onsubmit="SaveChanges()">
-            <table>
-                <tr><th>Name:</th></tr>
-                <tr><td><input type="text" name="CustomerName" value="" autofocus/></td></tr>
-                <tr><td><input name="CustomerId" type="hidden"></td></tr>
-                <tr><th>Business type:</th></tr>
-                    <tr><td>
-                            <select name="BusinessTypeName">
-                                @foreach (var e in ViewBag.BusinessTypes)
-                                {
-                                    <option>@e.BusinessTypeName</option>
-                                }
-                            </select>                        
-                        </td>
-                </tr>
+            <table class="fields">
                 <tr>
-                    <input type="submit" value="Записать"/>
-                    <input type="button" value="Закрыть" name="close" onclick="$('#dialog_customer').dialog('close')" />
+                    <td>Name:</td>
+                    <td><input type="text" name="CustomerName" value="" autofocus required /></td>
                 </tr>
+                <tr><td><input name="CustomerId" type="hidden"></td></tr>
+                <tr>
+                    <td>Business type:</td>
+                    <td>
+                        <select name="BusinessTypeName">
+                            @foreach (var e in ViewBag.BusinessTypes)
+                            {
+                                <option>@e.BusinessTypeName</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+
             </table>
-            
+
+            <div id="BankAccountsTable">
+            </div>
+
+            <tr>
+                <td><input type="submit" value="Записать" class="btn btn-default" /></td>
+                <td><input type="button" value="Закрыть" class="btn btn-default" name="close" onclick="$('#dialog_customer').dialog('close')" /></td>
+            </tr>
             <div id="dialog_customer_divmsg"></div>
         </form>
     </div>
 
-        <script type="text/javascript" language="javascript">
+    <script type="text/javascript" language="javascript">
 
-        @*Press Edit button in Customers table*@
-            function EditClick(CustomerId, CustomerName, BusinessTypeName) {
-                $(function () {
-                    $("#dialog_customer input[name='CustomerName']").val(CustomerName);
-                    $("#dialog_customer input[name='CustomerId']").val(CustomerId);
-                    $("#dialog_customer select[name='BusinessTypeName']").val(BusinessTypeName);
-                    var dlg = document.getElementById('dialog_customer');
-                    dlg.title = 'Editing customer';
-                    // устанавливаем признак что запись уже существует, просто редактируем
-                    dlg.setAttribute('isNew', false);
-                    // установим атрибут со значением ID чтобы обновить потом запись в БД
-                    dlg.setAttribute('CustomerId', CustomerId);
-                    $("#dialog_customer").dialog();
-                });
-            };
+        @*Нажатие на кноку Удалить*@
+        function DeleteClick() {
 
-            @*Press New button*@
-            function NewClick() {
+            var rowdata = new Array();
+            $('.highlight > td').each(function (index, value) {
+                rowdata[index] = $(this).html();
+            });
+            window.location = "/Customers/Delete?CustomerId=" + rowdata[0];
+        };
 
-                $(function () {
-                    var dlg = document.getElementById('dialog_customer');
-                    dlg.title = 'Create new customer';
-                    // устанавливаем признак что запись новая
-                    dlg.setAttribute('isNew', true);
-                    $("#dialog_customer input[name='CustomerName']").val("");
-                    $("#dialog_customer input[name='CustomerId']").val("");
-                    $("#dialog_customer select[name='BusinessTypeName']").val("");
+        @*Нажатие на кнопку Изменить*@
+        function EditClick() {
+            var rowdata = new Array();
+            $('.highlight > td').each(function (index, value) {
+                rowdata[index] = $(this).html();
+            });
+            OpenEditDialog(rowdata[0], rowdata[1], rowdata[2]);
 
-                    $("#dialog_customer").dialog();
-                });
-            }
+        }
 
-            @*Save changes*@
-            function SaveChanges() {
-                @*validation form on client side*@
-                var errors = "";
-                if ($("#form_customer input[name='CustomerName']").val().length == 0) {
-                    errors = "Не задано имя контрагента";
-                }
+        @*Открывает диалог редактирования свойств*@
+        function OpenEditDialog(CustomerId, CustomerName, BusinessTypeName) {
+            $(function () {
+                $("#dialog_customer input[name='CustomerName']").val(CustomerName);
+                $("#dialog_customer input[name='CustomerId']").val(CustomerId);
+                $("#dialog_customer select[name='BusinessTypeName']").val(BusinessTypeName);
+                var dlg = document.getElementById('dialog_customer');
+                dlg.title = 'Контрагент ' + CustomerName;
+                // устанавливаем признак что запись уже существует, просто редактируем
+                dlg.setAttribute('isNew', false);
+                // установим атрибут со значением ID чтобы обновить потом запись в БД
+                dlg.setAttribute('CustomerId', CustomerId);
 
-                var myDiv = document.getElementById("dialog_customer_divmsg");
-
-                if (errors.length != 0) {
-                    myDiv.innerHTML = errors;
-                    return;
-                }
-                else
-                    myDiv.innerHTML = "";
-
-                @*Здесь по атрибуту isNew, определяется что это новая запись или уже существующая
-                    в зависимости от этого будет вызываться различный метод контроллера: Add или Update*@
-                var action;
-                if (document.getElementById('dialog_customer').getAttribute("isNew") == "true") action = '@Url.Action("Add", "Customers")';
-                else action = '@Url.Action("Update", "Customers")';
-
-                var msg = $('#form_customer').serialize();
                 $.ajax({
-                    type: 'POST',
-                    url: action,
-                    data: msg,
+                    type: 'GET',
+                    url: '@Url.Action("GetBankAccountsForEdit", "Customers")',
+                    data: { 'CustomerId': CustomerId },
                     success: function (data) {
-                        @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу CustomersTable*@
+                        @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу BankAccountsTable*@
                         if (data["isOk"]) {
-                            $('#dialog_customer').dialog('close');
-                            $('#CustomersTable').html(data["view"]);
+                            $('#BankAccountsTable').html(data["view"]);
                         }
                         else {
                             @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
-                                расположенном здесь, же на форме диалога, чтобы пользователь мог видеть сообщение*@
+                            расположенном здесь, же на форме диалога, чтобы пользователь мог видеть сообщение*@
                             var myDiv = document.getElementById("dialog_customer_divmsg");
-                            myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                            myDiv.innerHTML = "Ошибка полученния списка банковских счетов: " + data["Errors"];
                         }
                     },
                     // если запрос не удалось обработать
                     error: function (xhr, str) {
                         var myDiv = document.getElementById("dialog_customer_divmsg");
-                        myDiv.innerHTML = "Ошибка записи: " + xhr.responseCode;
+                        myDiv.innerHTML = "Ошибка полученния списка банковских счетов: " + xhr.responseCode;
                     }
                 });
 
+                $("#dialog_customer").dialog({ width: "50%" });
+            });
+        };
+
+        @*Press New button*@
+        function NewClick() {
+
+            $(function () {
+                var dlg = document.getElementById('dialog_customer');
+                dlg.title = 'Create new customer';
+                // устанавливаем признак что запись новая
+                dlg.setAttribute('isNew', true);
+                $("#dialog_customer input[name='CustomerName']").val("");
+                $("#dialog_customer input[name='CustomerId']").val("");
+                $("#dialog_customer select[name='BusinessTypeName']").val("");
+
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("GetBankAccountsForEdit", "Customers")',
+                    data: { 'CustomerId': null },
+                    success: function (data) {
+                        @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу BankAccountsTable*@
+                        if (data["isOk"]) {
+                            $('#BankAccountsTable').html(data["view"]);
+                        }
+                        else {
+                            @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
+                            расположенном здесь, же на форме диалога, чтобы пользователь мог видеть сообщение*@
+                            var myDiv = document.getElementById("dialog_customer_divmsg");
+                            myDiv.innerHTML = "Ошибка полученния списка банковских счетов: " + data["Errors"];
+                        }
+                    },
+                    // если запрос не удалось обработать
+                    error: function (xhr, str) {
+                        var myDiv = document.getElementById("dialog_customer_divmsg");
+                        myDiv.innerHTML = "Ошибка полученния списка банковских счетов: " + xhr.responseCode;
+                    }
+                });
+
+                $("#dialog_customer").dialog({ width: "50%" });
+            });
+        }
+
+
+
+        @*Save changes*@
+        function SaveChanges() {
+            @*validation form on client side*@
+            var errors = "";
+            if ($("#form_customer input[name='CustomerName']").val().length == 0) {
+                errors = "Не задано имя контрагента";
             }
 
-            // Обработка ввода с клавиатуры
-            // нажатие ENTER в поле CustomerName - переход на следующее поле
-            $("#dialog_customer input[name='CustomerName']").keypress(function (e) {
-                if (e.keyCode == $.ui.keyCode.ENTER) {
-                    e.preventDefault();
-                    $("#dialog_customer select[name='BusinessTypeName']").focus();
+            var myDiv = document.getElementById("dialog_customer_divmsg");
+
+            if (errors.length != 0) {
+                myDiv.innerHTML = errors;
+                return;
+            }
+            else
+                myDiv.innerHTML = "";
+
+            @*Здесь по атрибуту isNew, определяется что это новая запись или уже существующая
+                    в зависимости от этого будет вызываться различный метод контроллера: Add или Update*@
+            var action;
+            if (document.getElementById('dialog_customer').getAttribute("isNew") == "true") action = '@Url.Action("Add", "Customers")';
+            else action = '@Url.Action("Update", "Customers")';
+
+            var msg = $('#form_customer').serialize();
+            $.ajax({
+                type: 'POST',
+                url: action,
+                data: msg,
+                success: function (data) {
+                    @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу customers_table*@
+                    if (data["isOk"]) {
+                        $('#dialog_customer').dialog('close');
+                        $('#customers_table').html(data["view"]);
+                    }
+                    else {
+                        @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
+                                расположенном здесь, же на форме диалога, чтобы пользователь мог видеть сообщение*@
+                        var myDiv = document.getElementById("dialog_customer_divmsg");
+                        myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                    }
+                },
+                // если запрос не удалось обработать
+                error: function (xhr, str) {
+                    var myDiv = document.getElementById("dialog_customer_divmsg");
+                    myDiv.innerHTML = "Ошибка записи: " + xhr.responseCode;
                 }
             });
 
-            // нажатие ENTER в поле BusinessTypeName - переход на кнопку submit
-            $("#dialog_customer select[name='BusinessTypeName']").keypress(function (e) {
-                if (e.keyCode == $.ui.keyCode.ENTER) {
-                    e.preventDefault();
-                    $("#dialog_customer input[type='submit']").focus();
-                }
-            });
+        }
 
-            // Если  нажато сочетание ctrl+Enter тогда сохраняем данные и закрываем диалог
-            $("#dialog_customer").keypress( function (e) {
-                if (e.ctrlKey && e.keyCode == 10) {
-                    e.preventDefault();
-                    SaveChanges();
-                }
-            });
+        // Обработка ввода с клавиатуры
+        // нажатие ENTER в поле CustomerName - переход на следующее поле
+        $("#dialog_customer input[name='CustomerName']").keypress(function (e) {
+            if (e.keyCode == $.ui.keyCode.ENTER) {
+                e.preventDefault();
+                $("#dialog_customer select[name='BusinessTypeName']").focus();
+            }
+        });
 
-            // Если отжали INSERT внутри командной панели таблицы
-            $('#CustomersTable input').on('keyup', function (e) {
-                if (e.keyCode == 45 ) {
-                    e.preventDefault();
-                    NewClick();
-                }
-            });
+        // нажатие ENTER в поле BusinessTypeName - переход на кнопку submit
+        $("#dialog_customer select[name='BusinessTypeName']").keypress(function (e) {
+            if (e.keyCode == $.ui.keyCode.ENTER) {
+                e.preventDefault();
+                $("#dialog_customer input[type='submit']").focus();
+            }
+        });
 
-            // Если отжали INSERT внутри таблицы
-            $('#CustomersTableInput').on('keyup', function (e) {
-                if (e.keyCode == 45) {
-                    e.preventDefault();
-                    NewClick();
-                }
-            });
+        // Если  нажато сочетание ctrl+Enter тогда сохраняем данные и закрываем диалог
+        $("#dialog_customer").keypress(function (e) {
+            if (e.ctrlKey && e.keyCode == 10) {
+                e.preventDefault();
+                SaveChanges();
+            }
+        });
 
-           // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
-            $("body").click(function (e) {
-                if (e.target.id == "CustomersTable" || $(e.target).parents("#CustomersTable").size()) {
-                    $("#CustomersTableInput").focus();
-                }
-            });
+        // Если отжали INSERT внутри командной панели таблицы
+        $('#customers_table input').on('keyup', function (e) {
+            if (e.keyCode == 45) {
+                e.preventDefault();
+                NewClick();
+            }
+        });
 
-        </script>
+        // Если отжали INSERT внутри таблицы
+        $('#customers_tableInput').on('keyup', function (e) {
+            if (e.keyCode == 45) {
+                e.preventDefault();
+                NewClick();
+            }
+        });
+
+        // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
+        $("body").click(function (e) {
+            if (e.target.id == "customers_table" || $(e.target).parents("#customers_table").size()) {
+                $("#customers_tableInput").focus();
+            }
+        });
+
+
+        // подсвечивание строки
+        $('#customers_table > tbody > tr').on('click', function () {
+            $(this).addClass('highlight').siblings().removeClass('highlight');
+        });
+
+        // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
+        $('#customers_table > tbody > tr > td').on('dblclick', function () {
+            var rowdata = new Array();
+            $(this).parent().find("td").each(function (index, value) {
+                rowdata[index] = $(this).html();
+            });
+            OpenEditDialog(rowdata[0], rowdata[1], rowdata[2]);
+        });
+
+
+        // Обработка ввода с клавиатуры
+
+        // Если нажали клавишу внутри таблицы
+        $('#customers_table_input').on('keydown', function (e) {
+            // перемещение фокуса строки на одну строку вниз
+            if (e.keyCode == $.ui.keyCode.DOWN) {
+                e.preventDefault();
+                $('#customers_table .highlight').next().addClass('highlight').siblings().removeClass('highlight');
+            }
+
+            // перемещение фокуса строки на одну строку вверх
+            if (e.keyCode == $.ui.keyCode.UP) {
+                e.preventDefault();
+                $('#customers_table .highlight').prev().addClass('highlight').siblings().removeClass('highlight');
+            }
+            // вход в режим редактирования ячейки при нажатии клавише ENTER
+            if (e.keyCode == $.ui.keyCode.ENTER) {
+                e.preventDefault();
+                EditRow($('#customers_table .highlight > td').eq(0));
+            }
+        });
+
+        // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
+        $("body").click(function (e) {
+            if (e.target.id == "customers_table" || $(e.target).parents("#customers_table").size()) {
+                $("#customers_table_input").focus();
+            }
+        });
+
+    </script>
+
+    <style>
+        @*Стиль для подсвечивания строки таблицы*@ .table-striped tbody tr.highlight td {
+            background-color: bisque;
+        }
+    </style>
+
 </body>
+
+
+
 </html>

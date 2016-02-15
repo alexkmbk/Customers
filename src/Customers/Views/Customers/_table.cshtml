@@ -6,28 +6,34 @@
 
     }
     else {
-        <table class="table table-striped table-bordered table-condensed">
+        <table id="customers_table" class="table table-striped table-bordered table-condensed">
             <tr>
                 <th>Name</th>
                 <th>Type</th>
-                <th>Edit</th>
-                <th>Delete</th>
-            </tr>
+             </tr>
                         @foreach (var e in Model)
                 {
                             <tr>
 
+                                <td style="display:none;">@e.CustomerId</td>
                                 <td>@e.CustomerName</td>
                                 <td>@e.BusinessType.BusinessTypeName</td>
-                                <td><input type="button" value="Edit" onclick="EditClick('@e.CustomerId', '@e.CustomerName', '@e.BusinessType.BusinessTypeName')"/></td>
-                                <td>
-                                    @using (Html.BeginForm("Delete", "Customers", FormMethod.Post))
-                                    {
-                                        <input type="hidden" value="@e.CustomerId" name="CustomerId" />
-                                        <input type="submit" value="Delete" />
-                                    }
-                                </td>
-                            </tr>
+                             </tr>
                         }
         </table>
     }
+
+@*
+
+    <td>@e.CustomerName</td>
+    <td>@e.BusinessType.BusinessTypeName</td>
+    <td><input type="button" value="Edit" onclick="EditClick('@e.CustomerId', '@e.CustomerName', '@e.BusinessType.BusinessTypeName')"/></td>
+    <td>
+        @using (Html.BeginForm("Delete", "Customers", FormMethod.Post))
+        {
+            <input type="hidden" value="@e.CustomerId" name="CustomerId" />
+            <input type="submit" value="Delete" />
+        }
+    </td>
+
+*@

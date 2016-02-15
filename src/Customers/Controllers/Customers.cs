@@ -59,7 +59,54 @@ namespace Customers.Controllers
         public IActionResult BankAccounts()
         {
             ViewBag.Title = "Счета контрагентов";
-            return View("_BankAccounts", _ctx.BankAccounts.ToList());
+
+            var BankAccounts = from row in _ctx.BankAccounts
+                               select new BankAccount
+                               {
+                                   BankAccountId = row.BankAccountId,
+                                   BankAccountNumber = row.BankAccountNumber,
+                                   Customer = new Customer { CustomerId = row.Customer.CustomerId, CustomerName = row.Customer.CustomerName },
+                                   Bank = new Bank { BankId = row.Bank.BankId, BankName = row.Bank.BankName }
+                               };
+
+            return View("_BankAccounts_view", BankAccounts);
+        }
+
+        // Возвращает список BankAccounts для редактирования
+        [HttpGet]
+        public IActionResult GetBankAccountsForEdit(int CustomerId)
+        {
+            ViewBag.Title = "Счета контрагента";
+            ViewBag.CustomerId = CustomerId;
+            var BankAccounts = from row in _ctx.BankAccounts
+                               where (row.Customer.CustomerId == CustomerId)
+                               select new BankAccount { BankAccountId = row.BankAccountId, BankAccountNumber = row.BankAccountNumber,
+                                   Customer = new Customer { CustomerId = row.Customer.CustomerId, CustomerName = row.Customer.CustomerName },
+                                   Bank = new Bank { BankId = row.Bank.BankId, BankName = row.Bank.BankName } };
+            var BankAccounts_edit = RenderPartialViewToString("_BankAccounts_edit", BankAccounts);
+            return Json(new { isOk = true, Errors = "", view = BankAccounts_edit });
+        }
+
+        // Возвращает список банков для выбора при вводе построке
+        [HttpGet]
+        public IActionResult GetAutocompleteBankList(string term)
+        {
+
+            var banks = _ctx.Banks
+                    .Where(x => x.BankName.ToLower().Contains(term.ToLower()))
+                    .OrderBy(x => x.BankName)
+                    .Select(x => new { label = x.BankName + "("+ x.BIC + ")", value = x.BankName, Id = x.BankId })
+                    .ToList();
+            return Json(banks);
+        }
+
+
+        // Форма BankAccount
+        // GET: /<controller>/
+        public IActionResult BankAccount(int Id)
+        {
+            ViewBag.Title = "Счет контрагента";
+            return View(_ctx.Banks.FirstOrDefault(e => e.BankId == Id));
         }
 
         // Список Banks
@@ -70,7 +117,7 @@ namespace Customers.Controllers
             return View("_Banks", _ctx.Banks.ToList());
         }
 
-        // Список Banks
+        // Загрузка банков из файлов Excel
         [HttpPost]
         public IActionResult UploadBanks(ICollection<IFormFile> files)
         {
@@ -113,7 +160,7 @@ namespace Customers.Controllers
         }
 
         // Удаление записи о контрагенте по переданному ID
-        [HttpPost]
+        [HttpGet]
         [Authorize]
         public IActionResult Delete(int CustomerId)
         {
@@ -158,7 +205,6 @@ namespace Customers.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         // Обновление данных контрагента
         public IActionResult Update(int CustomerId, string CustomerName, string BusinessTypeName)
         {
@@ -180,6 +226,38 @@ namespace Customers.Controllers
 
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
             return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_table", GetCustomers()) });
+
+        }
+
+        
+        [HttpPost]
+        public IActionResult AddBankAccount(string BankAccountNumber, int BankId, int CustomerId)
+        {
+            var bank = _ctx.Banks.FirstOrDefault(e => e.BankId == BankId);
+            if (bank == null)
+            {
+                return Json(new { isOk = false, Errors = "Не найден указанный банк" });
+            }
+            BankAccount bankAccount = new BankAccount();
+            if (_ctx.BankAccounts.FirstOrDefault(e => e.BankAccountNumber == BankAccountNumber) != null)
+            {
+                return Json(new { isOk = false, Errors = $"Счет с номером '{BankAccountNumber}' уже существует" });
+            }
+            var customer = _ctx.Customers.FirstOrDefault(e => e.CustomerId == CustomerId);
+            if (customer == null)
+            {
+                return Json(new { isOk = false, Errors = "Не найден контрагент" });
+            }
+            bankAccount.BankAccountNumber = BankAccountNumber;
+            bankAccount.Bank = bank;
+            bankAccount.Customer = customer;
+            _ctx.BankAccounts.Add(bankAccount);
+            _ctx.SaveChanges();
+
+            Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
+            // контрагентов в виде строки
+            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_BankAccounts_edit", _ctx.BankAccounts) });
 
         }
 

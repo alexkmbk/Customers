@@ -11,7 +11,12 @@ namespace Customers.Models
         public int CustomerId { get; set; }
         public string CustomerName { get; set; }
         public virtual BusinessType BusinessType { get; set; }
-        public virtual ICollection<Customer> BankAccounts { get; set; }
+        public virtual ICollection<BankAccount> BankAccounts { get; set; }
+
+        public Customer()
+        {
+            BankAccounts = new List<BankAccount>();
+         }
     }
 
     public class BusinessType
@@ -27,6 +32,7 @@ namespace Customers.Models
         public string BankAccountNumber { get; set; }
         public virtual Customer Customer { get; set; }
         public virtual Bank Bank { get; set; }
+        
     }
 
     public class Bank
@@ -35,4 +41,5 @@ namespace Customers.Models
         public string BankName { get; set; }
         public string BIC { get; set; }
     }
+    
 }

@@ -1,0 +1,9 @@
+﻿@model Customers.Models.Bank
+
+<td>
+    @Html.HiddenFor(x => x.BankId)
+    @Html.EditorFor(x => x.BankName)
+</td>
+<td>
+    @Html.DisplayFor(x => x.BIC)
+</td>

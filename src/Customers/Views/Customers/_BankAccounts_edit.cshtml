@@ -1,0 +1,170 @@
+﻿@model IEnumerable<Customers.Models.BankAccount>
+
+<h4>@Html.ViewData["Title"]</h4>
+
+<div>
+    <input type="button" value="Добавить" onclick="NewBankAccountClick()" autofocus class="btn btn-default" />
+    <input type="button" value="Изменить" class="btn btn-default" />
+    <input type="button" value="Удалить" class="btn btn-default" />
+</div>
+
+@if (Model.Count() == 0)
+{
+    <table class="table table-striped table-bordered table-condensed EmptyTable" style="height: 50px;">
+        <thead>
+            <tr>
+                <th>Номер счета</th>
+                <th>Банк</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td></td><td></td>
+            </tr>
+        </tbody>
+    </table>
+}
+else {
+    <div>
+        <a href="#bankaccounts_table" id="bankaccounts_table_input"></a>
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th>"Номер счета"</th>
+                    <th>"Банк"</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model)
+                {
+                    <tr>
+                        <td>@e.BankAccountNumber</td>
+                        <td>@e.Bank.BankName</td>
+                        <td style="display:none;">@e.Bank.BankId</td>
+                        <td style="display:none;">@e.BankAccountId</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@*Bank account dialog class="ui-front"*@
+<div id="dialog_BankAccount" title="Bank account" style="display:none;" class="ui-front">
+    <form method="POST" id="form_BankAccount" action="javascript:void(null);" onsubmit="SaveBankAccountChanges()">
+        <input name="CustomerId" type="hidden" value="@Html.ViewBag.CustomerId" >
+        <table>
+            <tr><th>Account number:</th></tr>
+            <tr><td><input type="text" name="BankAccountNumber" value="" autofocus required /></td></tr>
+            <tr><th>Bank:</th></tr>
+            <tr><td><input type="text" name="BankName" value="" autofocus required /></td></tr>
+
+            <tr><td><input name="BankAccountId" type="hidden"></td></tr>
+            <tr><td><input name="BankId" type="hidden"></td></tr>
+
+            <tr>
+                <td><input type="submit" value="Записать" class="btn btn-default" /></td>
+                <td><input type="button" value="Закрыть" name="close" onclick="$('#dialog_BankAccounts').dialog('close')" class="btn btn-default" /></td>
+            </tr>
+        </table>
+
+        <div id="dialog_BankAccount_divmsg"></div>
+    </form>
+</div>
+
+<style>
+    #customers_table tbody tr.highlight td {
+        background-color: bisque;
+    }
+
+    #customers_table tbody tr.highlight {
+        outline: none;
+        border-color: #ffd800;
+        box-shadow: 0 0 20px #ffd800;
+        border: 5px solid #ffd800;
+        border-radius: 7px;
+    }
+
+    table input {
+        width: 100%;
+        padding: 0px;
+        margin: 0px;
+    }
+
+    }
+</style>
+
+<script>
+    var autoComplete, input, dlg = $("#dialog_BankAccount");
+
+              @*Press New Bank Account button*@
+            function NewBankAccountClick() {
+
+                $(function () {
+                    var dlg = document.getElementById('dialog_BankAccount');
+                    dlg.title = 'Create new bank account';
+                    // устанавливаем признак что запись новая
+                    dlg.setAttribute('isNew', true);
+                    $("#dialog_BankAccount input[name='BankAccountNumber']").val("");
+                    $("#dialog_BankAccount input[name='BankAccountId']").val("");
+                    $("#dialog_BankAccount select[name='BankName']").val("");
+                    $("#dialog_BankAccount select[name='BankId']").val("");
+
+                    $("#dialog_BankAccount").dialog();
+                });
+            }
+
+            @*Save Bank Accountchanges*@
+            function SaveBankAccountChanges() {
+
+                @*Здесь по атрибуту isNew, определяется что это новая запись или уже существующая
+                в зависимости от этого будет вызываться различный метод контроллера: Add или Update*@
+                var action;
+                if (document.getElementById('dialog_BankAccount').getAttribute("isNew") == "true") action = '@Url.Action("AddBankAccount", "Customers")';
+                else action = '@Url.Action("UpdateBankAccount", "Customers")';
+
+                var msg = $('#form_BankAccount').serialize();
+                $.ajax({
+                    type: 'POST',
+                    url: action,
+                    data: msg,
+                    success: function (data) {
+                        @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу CustomersTable*@
+                        if (data["isOk"]) {
+                            $('#dialog_BankAccount').dialog('close');
+                            $('#BankAccountsTable').html(data["view"]);
+                        }
+                    else {
+                            @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
+                        расположенном здесь, же на форме диалога, чтобы пользователь мог видеть сообщение*@
+                            var myDiv = document.getElementById("dialog_BankAccount_divmsg");
+                        myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                    }
+                },
+                    // если запрос не удалось обработать
+                    error: function (xhr, str) {
+                        var myDiv = document.getElementById("dialog_BankAccount_divmsg");
+                        myDiv.innerHTML = "Ошибка записи: " + xhr.responseCode;
+                    }
+            });
+
+            }
+    // Autocomplete
+    $(function () {
+        input = $("#dialog_BankAccount input[name='BankName']");
+        input.autocomplete({
+            source: '@Url.Action("GetAutocompleteBankList", "Customers")',
+            minLength: 1,
+            select: function (event, ui) {
+                ui.item ?
+                $("#dialog_BankAccount input[name='BankId']").val(ui.item.Id) :
+                   $("#dialog_BankAccount input[name='BankId']").val("");
+            },
+            open: function () {
+                autoComplete.zIndex(dlg.zIndex() + 10);
+            }
+        });
+        autoComplete = input.autocomplete("widget");
+        autoComplete.insertAfter(dlg.parent());
+    });
+</script>
