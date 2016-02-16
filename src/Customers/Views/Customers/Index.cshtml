@@ -196,7 +196,7 @@
                         dlg.dialog('close');
                         $('#customers_table_div').html(data["view"]);
                         $('#customers_table_input').focus();
-                        dlg.dialog('destroy').remove();
+                        dlg.dialog('destroy');
                     }
                     else {
                         @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
