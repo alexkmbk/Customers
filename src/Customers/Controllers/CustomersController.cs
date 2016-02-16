@@ -22,12 +22,12 @@ using System.Data;
 
 namespace Customers.Controllers
 {
-    public class Customers : Controller
+    public class CustomersController : Controller
     {
         // Контекст Entity Framework
         private readonly ApplicationDbContext _ctx;
   
-        public Customers(ApplicationDbContext ctx)
+        public CustomersController(ApplicationDbContext ctx)
         {
             _ctx = ctx;
          }

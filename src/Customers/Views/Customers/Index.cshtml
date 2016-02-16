@@ -11,16 +11,6 @@
 
     <h1>@ViewBag.Title</h1>
 
-    <div>
-        @*Командная панель с кнопками управления таблицей*@
-        <input type="button" value="Добавить" onclick="NewClick()" autofocus class="btn btn-default" />
-        <input type="button" value="Изменить" onclick="EditClick()" autofocus class="btn btn-default" />
-        <input type="button" value="Удалить" onclick="DeleteClick()" autofocus class="btn btn-default" />
-
-        @*Невидимый элемент ввода, для получения фокуса на таблицу, для клавиатурного ввода*@
-        <a id="customers_table_input" href="#customers_table"></a>
-        @Html.Partial("_table", Model)
-    </div>
 
     @*Customer dialog*@
     <div id="dialog_customer" title="Customer" style="display:none;">
@@ -54,6 +44,18 @@
             </tr>
             <div id="dialog_customer_divmsg"></div>
         </form>
+    </div>
+
+    <div>
+        @*Командная панель с кнопками управления таблицей*@
+        <input type="button" value="Добавить" onclick="NewClick()" autofocus class="btn btn-default" />
+        <input type="button" value="Изменить" onclick="EditClick()" autofocus class="btn btn-default" />
+        <input type="button" value="Удалить" onclick="DeleteClick()" autofocus class="btn btn-default" />
+
+        @*Невидимый элемент ввода, для получения фокуса на таблицу, для клавиатурного ввода*@
+        <div id="customers_table_div">
+            @Html.Partial("_table", Model)
+        </div>
     </div>
 
     <script type="text/javascript" language="javascript">
@@ -190,14 +192,22 @@
                 success: function (data) {
                     @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу customers_table*@
                     if (data["isOk"]) {
-                        $('#dialog_customer').dialog('close');
-                        $('#customers_table').html(data["view"]);
+                        var dlg = $('#dialog_customer');
+                        dlg.dialog('close');
+                        $('#customers_table_div').html(data["view"]);
+                        $('#customers_table_input').focus();
+                        dlg.dialog('destroy').remove();
                     }
                     else {
                         @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
                                 расположенном здесь, же на форме диалога, чтобы пользователь мог видеть сообщение*@
                         var myDiv = document.getElementById("dialog_customer_divmsg");
                         myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                    }
+                },
+                statusCode: {
+                    401: function (response) {
+                        document.location = "/Account/Login?returnUrl=/Customers/Index";
                     }
                 },
                 // если запрос не удалось обработать
@@ -235,36 +245,29 @@
         });
 
         // Если отжали INSERT внутри командной панели таблицы
-        $('#customers_table input').on('keyup', function (e) {
+        $('#customers_table_input').on('keyup', function (e) {
             if (e.keyCode == 45) {
                 e.preventDefault();
                 NewClick();
             }
         });
 
-        // Если отжали INSERT внутри таблицы
-        $('#customers_tableInput').on('keyup', function (e) {
-            if (e.keyCode == 45) {
-                e.preventDefault();
-                NewClick();
-            }
-        });
 
         // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
         $("body").click(function (e) {
             if (e.target.id == "customers_table" || $(e.target).parents("#customers_table").size()) {
-                $("#customers_tableInput").focus();
+                $("#customers_table_input").focus();
             }
         });
 
 
         // подсвечивание строки
-        $('#customers_table > tbody > tr').on('click', function () {
+        $('#customers_table_div').on('click','#customers_table > tbody > tr', function () {
             $(this).addClass('highlight').siblings().removeClass('highlight');
         });
 
         // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
-        $('#customers_table > tbody > tr > td').on('dblclick', function () {
+        $('#customers_table_div').on('dblclick','#customers_table > tbody > tr > td', function () {
             var rowdata = new Array();
             $(this).parent().find("td").each(function (index, value) {
                 rowdata[index] = $(this).html();
@@ -276,7 +279,7 @@
         // Обработка ввода с клавиатуры
 
         // Если нажали клавишу внутри таблицы
-        $('#customers_table_input').on('keydown', function (e) {
+        $('#customers_table_div').on('keydown','#customers_table_input', function (e) {
             // перемещение фокуса строки на одну строку вниз
             if (e.keyCode == $.ui.keyCode.DOWN) {
                 e.preventDefault();
@@ -291,14 +294,11 @@
             // вход в режим редактирования ячейки при нажатии клавише ENTER
             if (e.keyCode == $.ui.keyCode.ENTER) {
                 e.preventDefault();
-                EditRow($('#customers_table .highlight > td').eq(0));
-            }
-        });
-
-        // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
-        $("body").click(function (e) {
-            if (e.target.id == "customers_table" || $(e.target).parents("#customers_table").size()) {
-                $("#customers_table_input").focus();
+                var rowdata = new Array();
+                $('#customers_table .highlight').find("td").each(function (index, value) {
+                    rowdata[index] = $(this).html();
+                });
+                OpenEditDialog(rowdata[0], rowdata[1], rowdata[2]);
             }
         });
 
