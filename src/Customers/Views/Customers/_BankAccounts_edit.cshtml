@@ -205,7 +205,7 @@ else {
         $("#bankaccounts_table_inputrow").find("input").each(function (index, value) {
             $(this).attr("value", cells.eq(index).html());
             // сохраним в поле input в атрибуте prevVal значение ячейки до изменения
-            $(this).attr("prevVal", cells.eq(index).val());
+            $(this).attr("prevVal", cells.eq(index).html());
             $(this).attr("type", $(this).attr("show") == "true" ? "text" : "hidden");
             cells.eq(index).html("");
             cells.eq(index).append($(this));
@@ -223,9 +223,9 @@ else {
         }
 
         // при потере фокуса ввода
-        input.on('blur', function () {
+        /*input.on('blur', function () {
             @*Если просто перешли на другую ячейку, ничего не делаем*@
-            if ($(':focus').hasClass("tableinput")) return;
+           /* if ($(':focus').hasClass("tableinput")) return;
             // проверим на заполненность ячеек
             var row = $(this).parent().parent();
             var rowdata = new Array();
@@ -248,7 +248,7 @@ else {
             //e.parent().html(e.val());
 
             SaveData(rowdata);
-        });
+        });*/
     }
 
     function DeleteRow(row) {
@@ -277,8 +277,18 @@ else {
 
     // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
     $("body").click(function (e) {
-        if (e.target.id == "bankaccounts_table" || $(e.target).parents("#bankaccounts_table").size()) {
-            $("#bankaccounts_table_input").focus();
+
+        // Попытка захватить фокус если редактируется строка (нужны еще доработки)
+        if (($("#bankaccounts_table_inputrow").find("input").length == 0) && (e.target.className.indexOf("tableinput") == -1)) {
+            e.preventDefault();
+            //$(":focus").focus();
+            $(".tableinput").first().focus();
+        }
+        else if (e.target.id == "bankaccounts_table" || $(e.target).parents("#bankaccounts_table").size()) {
+            if (e.target.className.indexOf("tableinput") == -1) {
+                $("#bankaccounts_table_input").focus();
+            }
+            
         }
     });
 
@@ -293,20 +303,10 @@ else {
     });
 
     $(document).on('keydown', function (e) {
-        // если нажата клавиша ESC и выполняется редактирование ячейки,
-        // то необходимо завершить редактирование не сохраняя введенные данные
-        if (e.keyCode == $.ui.keyCode.ESCAPE) {
-            if (e.target.className == "tableinput") {
-                e.preventDefault();
-                var input = $(".tableinput").eq(0);
-                var prevVal = input.attr("prevVal");
-                input.parent().html(prevVal);
-                $("#bankaccounts_table_input").focus();
-            }
-        }
-            // если  нажата клавиша ENTER во время редактирования ячейки,
-            // то необходимо сохранить введенные данные и перейти к редактированию следующей колонки
-        else if (e.keyCode == $.ui.keyCode.ENTER) {
+
+        // если  нажата клавиша ENTER во время редактирования ячейки,
+        // то необходимо сохранить введенные данные и перейти к редактированию следующей колонки
+        if (e.keyCode == $.ui.keyCode.ENTER) {
             if (e.target.className.indexOf("tableinput") > -1) {
                 e.preventDefault();
                 var input = $("#" + e.target.id);
@@ -326,7 +326,7 @@ else {
                 }
             }
                 // Если нажат ENTER но редактирвоание строки еще не закончено, то игнорируем ввод
-            else if ($("#bankaccounts_table_inputs").children("input").length == 0) {
+            else if ($("#bankaccounts_table_inputrow").children("input").length == 0) {
                 e.preventDefault();
             }
         }
@@ -359,6 +359,36 @@ else {
         var myDiv = document.getElementById("dialog_customer_divmsg");
         myDiv.innerHTML = str;
     }
+
+    dlg.dialog({
+        beforeClose: function (e, ui) {
+
+            // если нажата клавиша ESC и выполняется редактирование ячейки,
+            // то необходимо завершить редактирование не сохраняя введенные данные
+
+            if (e.keyCode == 27) {
+                var inputrow = $("#bankaccounts_table_inputrow");
+                if (inputrow.children("input").length == 0) {
+                    e.preventDefault();
+                    var td;
+                    // перенесем элементы редактирования обратно
+                    var inputrow = $("#bankaccounts_table_inputrow");
+                    $(".tableinput").parent().parent().find("input").each(function (index, value) {
+                        td = $(this).parent();
+                        $(this).attr("type", "hidden");
+                        inputrow.append($(this));
+                        td.html($(this).attr("prevVal"));
+                    });
+                    if (td.parent().children().eq(3).html() == "") {
+                        td.parent().remove();
+                    }
+                    $("#bankaccounts_table_input").focus();
+                }
+
+            }
+        }
+    });
+
 </script>
 
 @*Выделим первую строку*@

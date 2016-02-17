@@ -13,7 +13,7 @@
 
     @*Customer dialog*@
     <div id="dialog_customer" title="Customer" style="display:none;">
-        <form method="POST" id="form_customer" action="javascript:void(null);" onsubmit="SaveChanges()">
+        <form method="POST" id="form_customer" action="javascript:void(null);" onsubmit="SaveChanges(true)">
             <table class="fields">
                 <tr>
                     <td>Name:</td>
@@ -38,7 +38,8 @@
             </div>
 
             <tr>
-                <td><input type="submit" value="Записать" class="btn btn-default" /></td>
+                <td><input type="submit" value="Записать и закрыть" class="btn btn-default" /></td>
+                <td><input type="button" value="Записать" onclick="SaveChanges(false)" class="btn btn-default" /></td>
                 <td><input type="button" value="Закрыть" class="btn btn-default" name="close" onclick="$('#dialog_customer').dialog('close')" /></td>
             </tr>
             <div id="dialog_customer_divmsg"></div>
@@ -71,6 +72,7 @@
 
         @*Нажатие на кнопку Изменить*@
         function EditClick() {
+
             var rowdata = new Array();
             $('.highlight > td').each(function (index, value) {
                 rowdata[index] = $(this).html();
@@ -82,6 +84,13 @@
         @*Открывает диалог редактирования свойств*@
         function OpenEditDialog(CustomerId, CustomerName, BusinessTypeName) {
             $(function () {
+
+                // Удалим ранее созданный диалог, чтобы очистить все свойства
+                var dlg = $("#dialog_customer");
+                if (dlg.hasClass('ui-dialog-content')) {
+                    dlg.dialog('destroy');
+                }
+
                 $("#dialog_customer input[name='CustomerName']").val(CustomerName);
                 $("#dialog_customer input[name='CustomerId']").val(CustomerId);
                 $("#dialog_customer select[name='BusinessTypeName']").val(BusinessTypeName);
@@ -123,10 +132,13 @@
         function NewClick() {
 
             $(function () {
-                var dlg = document.getElementById('dialog_customer');
-                dlg.title = 'Create new customer';
+                var dlg = $("#dialog_customer");
+                if (dlg.hasClass('ui-dialog-content')) {
+                    dlg.dialog('destroy');
+                } 
+                dlg.attr('title','Create new customer');
                 // устанавливаем признак что запись новая
-                dlg.setAttribute('isNew', true);
+                dlg.attr('isNew', true);
 
                 $.ajax({
                     type: 'GET',
@@ -135,7 +147,10 @@
                     success: function (data) {
                         @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу BankAccountsTable*@
                         if (data["isOk"]) {
-                            $('#bankaccaunts_table_div').html(data["view"]);
+                            $('#bankaccounts_table_div').html(data["view"]);
+                            // Установим все поля ввода банковских счетов неактивными, поскольку контрагент еще не записан в базу
+                            $('#bankaccounts_table_div :input').attr('disabled', true);
+                            $('#bankaccounts_table_div').addClass('disabled');
                         }
                         else {
                             @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
@@ -151,14 +166,12 @@
                     }
                 });
 
-                $("#dialog_customer").dialog({ width: "50%" });
+               dlg.dialog({ width: "50%" });
             });
         }
 
-
-
         @*Save changes*@
-        function SaveChanges() {
+        function SaveChanges(close) {
             @*validation form on client side*@
             var errors = "";
             if ($("#form_customer input[name='CustomerName']").val().length == 0) {
@@ -177,7 +190,8 @@
             @*Здесь по атрибуту isNew, определяется что это новая запись или уже существующая
                     в зависимости от этого будет вызываться различный метод контроллера: Add или Update*@
             var action;
-            if (document.getElementById('dialog_customer').getAttribute("isNew") == "true") action = '@Url.Action("Add", "Customers")';
+            var isNew = document.getElementById('dialog_customer').getAttribute("isNew");
+            if (isNew == "true") action = '@Url.Action("Add", "Customers")';
             else action = '@Url.Action("Update", "Customers")';
 
             var msg = $('#form_customer').serialize();
@@ -189,10 +203,23 @@
                     @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу customers_table*@
                     if (data["isOk"]) {
                         var dlg = $('#dialog_customer');
-                        dlg.dialog('close');
-                        $('#customers_table_div').html(data["view"]);
-                        $('#customers_table_input').focus();
-                        dlg.dialog('destroy');
+                        if (close) dlg.dialog('close');
+                        if (close) {
+                            $('#customers_table_div').html(data["view"]);
+                            $('#customers_table_input').focus();
+                            dlg.dialog('destroy');
+                        }
+                        else {
+                            $('#customers_table_div').html(data["view"]);
+                            if (isNew == "true") {
+                                // Установим все поля ввода банковских счетов активными, поскольку контрагент уже записан в базу
+                                $('#bankaccounts_table_div :input').removeAttr('disabled');
+                                $('#bankaccounts_table_div').removeClass('disabled');
+                                $("#CustomerId").val(data["CustomerId"]);
+                                dlg.attr("isNew", false);
+                                dlg.dialog('option', 'title', "Контрагент " + $("#form_customer input[name='CustomerName']").val());
+                            }
+                        }
                     }
                     else {
                         @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg

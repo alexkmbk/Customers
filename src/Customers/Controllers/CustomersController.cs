@@ -200,7 +200,7 @@ namespace Customers.Controllers
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
             // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
             // контрагентов в виде строки
-            return Json(new { isOk = true, Errors = "", view= RenderPartialViewToString("_table", GetCustomers())});
+            return Json(new { isOk = true, Errors = "", view= RenderPartialViewToString("_table", GetCustomers()), CustomerId = customer.CustomerId });
             
         }
 
