@@ -11,7 +11,6 @@
 
     <h1>@ViewBag.Title</h1>
 
-
     @*Customer dialog*@
     <div id="dialog_customer" title="Customer" style="display:none;">
         <form method="POST" id="form_customer" action="javascript:void(null);" onsubmit="SaveChanges()">
@@ -35,7 +34,7 @@
 
             </table>
 
-            <div id="BankAccountsTable">
+            <div id="bankaccounts_table_div">
             </div>
 
             <tr>
@@ -100,7 +99,7 @@
                     success: function (data) {
                         @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу BankAccountsTable*@
                         if (data["isOk"]) {
-                            $('#BankAccountsTable').html(data["view"]);
+                            $('#bankaccounts_table_div').html(data["view"]);
                         }
                         else {
                             @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
@@ -128,9 +127,6 @@
                 dlg.title = 'Create new customer';
                 // устанавливаем признак что запись новая
                 dlg.setAttribute('isNew', true);
-                $("#dialog_customer input[name='CustomerName']").val("");
-                $("#dialog_customer input[name='CustomerId']").val("");
-                $("#dialog_customer select[name='BusinessTypeName']").val("");
 
                 $.ajax({
                     type: 'GET',
@@ -139,7 +135,7 @@
                     success: function (data) {
                         @*Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу BankAccountsTable*@
                         if (data["isOk"]) {
-                            $('#BankAccountsTable').html(data["view"]);
+                            $('#bankaccaunts_table_div').html(data["view"]);
                         }
                         else {
                             @*Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
@@ -259,7 +255,6 @@
                 $("#customers_table_input").focus();
             }
         });
-
 
         // подсвечивание строки
         $('#customers_table_div').on('click','#customers_table > tbody > tr', function () {

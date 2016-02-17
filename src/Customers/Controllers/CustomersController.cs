@@ -229,7 +229,7 @@ namespace Customers.Controllers
 
         }
 
-        
+        // Добавляет новый счет
         [HttpPost]
         public IActionResult AddBankAccount(string BankAccountNumber, int BankId, int CustomerId)
         {
@@ -257,7 +257,59 @@ namespace Customers.Controllers
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
             // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
             // контрагентов в виде строки
-            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_BankAccounts_edit", _ctx.BankAccounts) });
+            return Json(new { isOk = true, Errors = "" });
+
+        }
+
+        // Обновляет данные счета
+        [HttpPost]
+        public IActionResult UpdateBankAccount(int BankAccountId, string BankAccountNumber, int BankId, int CustomerId)
+        {
+            var bank = _ctx.Banks.FirstOrDefault(e => e.BankId == BankId);
+            if (bank == null)
+            {
+                return Json(new { isOk = false, Errors = "Не найден указанный банк" });
+            }
+            BankAccount bankAccount = _ctx.BankAccounts.FirstOrDefault(e => e.BankAccountId == BankAccountId);
+            if (bankAccount == null)
+            {
+                return Json(new { isOk = false, Errors = $"Не найден счет по переданному Id - {BankAccountId}" });
+            }
+            var customer = _ctx.Customers.FirstOrDefault(e => e.CustomerId == CustomerId);
+            if (customer == null)
+            {
+                return Json(new { isOk = false, Errors = "Не найден контрагент" });
+            }
+            bankAccount.BankAccountNumber = BankAccountNumber;
+            bankAccount.Bank = bank;
+            bankAccount.Customer = customer;
+            _ctx.Update(bankAccount);
+            _ctx.SaveChanges();
+
+            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
+            // контрагентов в виде строки
+            return Json(new { isOk = true, Errors = "" });
+
+        }
+
+        // Удаляет счет
+        [HttpPost]
+        public IActionResult DeleteBankAccount(int BankAccountId)
+        {
+    
+            BankAccount bankAccount = _ctx.BankAccounts.FirstOrDefault(e => e.BankAccountId == BankAccountId);
+            if (bankAccount == null)
+            {
+                return Json(new { isOk = false, Errors = $"Не найден счет" });
+            }
+ 
+            _ctx.BankAccounts.Remove(bankAccount);
+            _ctx.SaveChanges();
+
+            Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
+            // контрагентов в виде строки
+            return Json(new { isOk = true, Errors = "" });
 
         }
 
