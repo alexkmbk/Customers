@@ -46,12 +46,15 @@ namespace Customers.Controllers
 
         // Список Customers
         // GET: /<controller>/
-        public IActionResult Index()
+        public IActionResult Index(bool ajax)
         {
             ViewBag.Title = "Customers";
             ViewBag.BusinessTypes = (from type in _ctx.BusinessTypes
                                      select type).ToList();
-            return View("Index", GetCustomers());
+            if (ajax)
+                return Json(new { view = RenderPartialViewToString("Index", GetCustomers()) });
+            else
+                return View("Index", GetCustomers());
         }
 
         // Список BankAccounts
@@ -68,8 +71,10 @@ namespace Customers.Controllers
                                    Customer = new Customer { CustomerId = row.Customer.CustomerId, CustomerName = row.Customer.CustomerName },
                                    Bank = new Bank { BankId = row.Bank.BankId, BankName = row.Bank.BankName }
                                };
+            
+            return Json(new {view = RenderPartialViewToString("_BankAccounts_view", BankAccounts) });
 
-            return View("_BankAccounts_view", BankAccounts);
+
         }
 
         // Возвращает список BankAccounts для редактирования

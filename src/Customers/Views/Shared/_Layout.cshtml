@@ -1,100 +1,159 @@
 ﻿<!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>@ViewData["Title"] - Customers</title>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Customers</title>
 
-        
-        <environment names="Development">
-            <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
-            <link rel="stylesheet" href="~/css/site.css" />
-        </environment>
-        <environment names="Staging,Production">
-            <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.5/css/bootstrap.min.css"
-                  asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css"
-                  asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
-            <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
-        </environment>
 
-        <!--link href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/themes/ui-darkness/jquery-ui.min.css" rel="stylesheet"-->
-        <link rel="stylesheet" href="jquery-ui-1.11.4.custom\jquery-ui.css" type="text/css" />
-        <!--<link rel="stylesheet" href="css/jquery-ui.theme.min.css" type="text/css" />
-        
-        <!--Подключаем сначала jQuery затем уже jQuery UI! -->
-        <script src="js/jquery-2.2.0.min.js"></script>
-        <script src="js/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
 
-        <style>
-            h4 {
-                color: darkgreen;
+    <!--link href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/themes/ui-darkness/jquery-ui.min.css" rel="stylesheet"-->
+    <link rel="stylesheet" href="~/jquery-ui-1.11.4.custom/jquery-ui.css" type="text/css" />
+    <!--<link rel="stylesheet" href="css/jquery-ui.theme.min.css" type="text/css" />
+
+    <!--Подключаем сначала jQuery затем уже jQuery UI! -->
+    <script src="~/js/jquery-2.2.0.min.js"></script>
+    <script src="~/js/jquery-ui.min.js"></script>
+    <script src="~/lib/system.js"></script>
+    <script src="~/app/keyboard_code_enums.js"></script>
+    
+    <style>
+        h4 {
+            color: darkgreen;
+        }
+
+        table {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+            table .EmptyTable > td {
+                border: none;
             }
 
-            table {
-                margin-top: 5px;
-                margin-bottom: 5px;
+        .EmptyTable {
+            height: 50px;
+        }
+
+
+        .fields {
+            border-spacing: 7px 2px;
+        }
+
+            .fields > tbody > tr > td {
+                padding: 2px;
             }
 
-                table .EmptyTable > td {
-                    border: none;
-                }
-
-            .EmptyTable {
-                height: 50px;
-            }
+        div.disabled {
+            pointer-events: none;
+            /* for "disabled" effect */
+            opacity: 0.5;
+        }
 
 
-            .fields {
-                border-spacing: 7px 2px;
-            }
+        h1 {
+            color: #369;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 250%;
+        }
 
-                .fields > tbody > tr > td {
-                    padding: 2px;
-                }
+        h2, h3 {
+            color: #444;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: lighter;
+        }
 
-            div.disabled {
-                pointer-events: none;
-                /* for "disabled" effect */
-                opacity: 0.5;
-            }
-        </style>
+        body {
+            margin: 2em;
+        }
 
+        body, input[text], button {
+            color: #888;
+            font-family: Cambria, Georgia;
+        }
+    </style>
 
-
-    </head>
-    <body>
-        <div class="navbar navbar-inverse navbar-fixed-top">
-            <div class="container">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a asp-controller="Customers" asp-action="Index" class="navbar-brand">Customers</a>
-                </div>
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-                        <li><a asp-controller="Home" asp-action="About">About</a></li>
-                        <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
-                        <li><a asp-controller="Customers" asp-action="Index">Контрагенты</a></li>
-                        <li><a asp-controller="Customers" asp-action="BankAccounts">Cчета контрагентов</a></li>
-                        <li><a asp-controller="Customers" asp-action="Banks">Банки</a></li>
-                    </ul>
-                    @await Html.PartialAsync("_LoginPartial")
-                </div>
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a asp-controller="Customers" asp-action="Index" class="navbar-brand">Customers</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li><a asp-controller="Home" asp-action="About">About</a></li>
+                    <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
+                    <li><a class="ajaxLink" href="#" data-href='@Url.Action("Index", "Customers", new { ajax = true })'>Контрагенты</a></li>
+                    <li><a class="ajaxLink" href="#" data-href='@Url.Action("BankAccounts", "Customers")'>Cчета контрагентов</a></li>
+                    <li><a asp-controller="Customers" asp-action="Banks">Банки</a></li>
+                </ul>
+                @await Html.PartialAsync("_LoginPartial")
             </div>
         </div>
-        <div class="container body-content">
-            @RenderBody()
-            <hr />
-            <footer>
-                <p>&copy; 2016 - Customers</p>
-            </footer>
-        </div>
+    </div>
+    <div class="container body-content">
+         <div id="bodyContent">@RenderBody()</div>
+        <hr />
+        <footer>
+            <p>&copy; 2016 - Customers</p>
+        </footer>
+    </div>
 
-        @RenderSection("scripts", required: false)
-    </body>
+    @RenderSection("scripts", required: false)
+
+    <script>
+        $(document).ready(function () {
+            $("a.ajaxLink").on('click', function () {
+                var self = this;
+                $.ajax({
+                    type: "GET",
+                    url: $(this).attr('data-href'),
+                    success: function (resp) {
+                        // this assumes that the data-ajax-mode is always "replace":
+                        $("#bodyContent").html(resp["view"]);
+
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Angular -->
+    <!-- 1. Load libraries -->
+    <!-- IE required polyfills, in this exact order 
+    <script src="~/lib/es6-shim.min.js"></script>
+    <script src="~/lib/system-polyfills.js"></script>
+    <script src="~/lib/shims_for_IE.js"></script>
+
+    <script src="~/lib/angular2-polyfills.js"></script>
+    <script src="~/lib/system.src.js"></script>
+    <script src="~/lib/Rx.js"></script>
+    <script src="~/lib/angular2.dev.js"></script>
+
+    <script>
+        System.config({
+            packages: {
+                app: {
+                    format: 'register',
+                    defaultExtension: 'js'
+                }
+                
+            },
+         globalEvaluationScope: false 
+        });
+        System.import('app/main')
+        .then(null, console.error.bind(console));
+    </script>-->
+
+</body>
 </html>

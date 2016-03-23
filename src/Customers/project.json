@@ -1,4 +1,4 @@
-﻿{
+{
   "userSecretsId": "aspnet5-Customers-7b521fe9-e40e-4d25-bb17-3c1f76d0c56d",
   "version": "1.0.0-*",
   "compilationOptions": {
@@ -9,6 +9,8 @@
     "Dapper": "1.50.0-beta7",
     "EntityFramework.Commands": "7.0.0-rc1-final",
     "EntityFramework7.Npgsql": "3.1.0-rc1-3",
+    "jquery.TypeScript.DefinitelyTyped": "3.0.4",
+    "jquery.window.TypeScript.DefinitelyTyped": "0.0.3",
     "Microsoft.AspNet.Authentication.Cookies": "1.0.0-rc1-final",
     "Microsoft.AspNet.Diagnostics.Entity": "7.0.0-rc1-final",
     "Microsoft.AspNet.Identity.EntityFramework": "3.0.0-rc1-final",
@@ -25,6 +27,7 @@
     "Microsoft.Extensions.Logging": "1.0.0-rc1-final",
     "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final",
     "Microsoft.Extensions.Logging.Debug": "1.0.0-rc1-final",
+    "Microsoft.jQuery.Unobtrusive.Ajax": "3.2.3",
     "Microsoft.VisualStudio.Web.BrowserLink.Loader": "14.0.0-rc1-final",
     "System.Linq": "4.0.1-beta-23516",
     "System.Linq.Parallel": "4.0.1-beta-23516"
@@ -52,6 +55,6 @@
     "**.vspscc"
   ],
   "scripts": {
-    "prepublish": [ "npm install", "bower install", "gulp clean", "gulp min" ]
+    "prepublish": [ "npm install", "bower install", "gulp clean", "gulp min", "gulp moveToLibs" ]
   }
 }

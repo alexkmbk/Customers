@@ -18,6 +18,25 @@ paths.minCss = paths.webroot + "css/**/*.min.css";
 paths.concatJsDest = paths.webroot + "js/site.min.js";
 paths.concatCssDest = paths.webroot + "css/site.min.css";
 
+gulp.task("min", ["min:js", "min:css"]);
+
+/// <binding AfterBuild='moveToLibs' />
+gulp.task('moveToLibs', function (done) {
+    gulp.src([
+      'node_modules/angular2/bundles/js',
+      'node_modules/angular2/bundles/angular2.*.js*',
+      'node_modules/angular2/bundles/angular2-polyfills.js',
+      'node_modules/angular2/bundles/http.*.js*',
+      'node_modules/angular2/bundles/router.*.js*',
+      'node_modules/es6-shim/es6-shim.min.js*',
+      'node_modules/angular2/es6/dev/src/testing/shims_for_IE.js',
+      'node_modules/systemjs/dist/*.*',
+      'node_modules/jquery/dist/jquery.*js',
+      'node_modules/bootstrap/dist/js/bootstrap*.js',
+      'node_modules/rxjs/bundles/Rx.js'
+    ]).pipe(gulp.dest('./wwwroot/lib/'));
+});
+
 gulp.task("clean:js", function (cb) {
     rimraf(paths.concatJsDest, cb);
 });
@@ -41,5 +60,3 @@ gulp.task("min:css", function () {
         .pipe(cssmin())
         .pipe(gulp.dest("."));
 });
-
-gulp.task("min", ["min:js", "min:css"]);
