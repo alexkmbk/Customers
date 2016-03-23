@@ -85,8 +85,8 @@ function SaveChanges(close) {
     // в зависимости от этого будет вызываться различный метод контроллера: Add или Update
     var action;
     var isNew = document.getElementById('dialog_customer').getAttribute("isNew");
-    if (isNew == "true") action = '@Url.Action("Add", "Customers")';
-    else action = '@Url.Action("Update", "Customers")';
+    if (isNew == "true") action = 'Customers/Add';
+    else action = 'Customers/Update';
 
     var msg = $('#form_customer').serialize();
     $.ajax({
