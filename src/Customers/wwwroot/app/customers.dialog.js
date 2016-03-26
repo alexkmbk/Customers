@@ -4,7 +4,7 @@ System.register([], function(exports_1) {
         $('#bankaccounts_table_div :input').removeAttr('disabled');
         $('#bankaccounts_table_div').removeClass('disabled');
         $("#CustomerId").val(data["CustomerId"]);
-        dlg.attr("isNew", false);
+        dlg.attr("isNew", "false");
         dlg.dialog('option', 'title', "Контрагент " + $("#form_customer input[name='CustomerName']").val());
     }
     // Открывает диалог редактирования свойств
@@ -92,7 +92,7 @@ System.register([], function(exports_1) {
         if (isNew == "true")
             action = 'Customers/Add';
         else
-            action = 'Customers/Update';
+            action = 'Customers/Update?CustomerId=' + $("#CustomerId").val();
         var msg = $('#form_customer').serialize();
         $.ajax({
             type: 'POST',
