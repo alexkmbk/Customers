@@ -211,44 +211,12 @@ else {
             cells.eq(index).append($(this));
         });
 
-        //cell.html('<input type="text" value="' + val + '" />');
-        //var input = cell.find('input');
-        // input.attr("prevVal", val);
-        //input.addClass("tableinput");
         if (!currentcell) {
             row.find("input").first().focus();
         }
         else {
             currentcell.find("input").first().focus();
         }
-
-        // при потере фокуса ввода
-        /*input.on('blur', function () {
-            @*Если просто перешли на другую ячейку, ничего не делаем*@
-           /* if ($(':focus').hasClass("tableinput")) return;
-            // проверим на заполненность ячеек
-            var row = $(this).parent().parent();
-            var rowdata = new Array();
-
-            var isempty = false;
-            row.find("input").each(function (index, value) {
-                rowdata[index] = $(this).val();
-                if (rowdata[index] == "") {
-                    isempty = true;
-                }
-            });
-
-            if (isempty) {
-                return;
-            }
-
-            // Запрос на сервер для обновления данных
-
-            // После снятия фокуса, снова установим просто текст
-            //e.parent().html(e.val());
-
-            SaveData(rowdata);
-        });*/
     }
 
     function DeleteRow(row) {

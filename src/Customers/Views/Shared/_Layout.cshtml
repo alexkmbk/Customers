@@ -17,8 +17,10 @@
     <script src="~/js/jquery-2.2.0.min.js"></script>
     <script src="~/js/jquery-ui.min.js"></script>
     <script src="~/lib/system.js"></script>
-    <script src="~/app/keyboard_code_enums.js"></script>
     
+    <script src="~/app/table.js"></script>
+    <script src="~/app/keyboard_code_enums.js"></script>
+
     <style>
         h4 {
             color: darkgreen;
@@ -72,6 +74,24 @@
         body, input[text], button {
             color: #888;
             font-family: Cambria, Georgia;
+        }
+
+        .tableinput {
+           box-sizing:border-box;
+         }
+
+        td {
+            padding: 0;
+            padding-right: 0;
+            padding-left: 0;
+            padding-bottom: 0;
+            padding-top: 0;
+            margin-bottom: 0;
+            margin-top: 0;
+            margin-right: 0;
+            margin-left: 0;
+            box-sizing:border-box;
+ 
         }
     </style>
 
@@ -138,22 +158,13 @@
     <script src="~/lib/angular2-polyfills.js"></script>
     <script src="~/lib/system.src.js"></script>
     <script src="~/lib/Rx.js"></script>
-    <script src="~/lib/angular2.dev.js"></script>
+    <script src="~/lib/angular2.dev.js"></script>-->
 
     <script>
-        System.config({
-            packages: {
-                app: {
-                    format: 'register',
-                    defaultExtension: 'js'
-                }
-                
-            },
-         globalEvaluationScope: false 
-        });
-        System.import('app/main')
-        .then(null, console.error.bind(console));
-    </script>-->
+    System.config({
+          packages: { 'app': { defaultExtension: 'js' } }
+    });
+    </script>
 
 </body>
 </html>

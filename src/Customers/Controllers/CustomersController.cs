@@ -73,8 +73,6 @@ namespace Customers.Controllers
                                };
             
             return Json(new {view = RenderPartialViewToString("_BankAccounts_view", BankAccounts) });
-
-
         }
 
         // Возвращает список BankAccounts для редактирования

@@ -28,51 +28,37 @@
             <div id="bankaccounts_table_div">
             </div>
 
-            <tr>
-                <td><input type="submit" value="Записать и закрыть" class="btn btn-default" /></td>
-                <td><input type="button" value="Записать" onclick="SaveChanges(false)" class="btn btn-default" /></td>
-                <td><input type="button" value="Закрыть" class="btn btn-default" name="close" onclick="$('#dialog_customer').dialog('close')" /></td>
-            </tr>
+            <div id="dialog_customer_panel">
+                <tr>
+                    <td><input name ="SaveAndCloseButton" type="submit" value="Записать и закрыть" class="btn btn-default" /></td>
+                    <td><input name ="SaveButton" type="button" value="Записать" class="btn btn-default" /></td>
+                    <td><input type="button" value="Закрыть" class="btn btn-default" name="close" onclick="$('#dialog_customer').dialog('close')" /></td>
+                </tr>
+            </div>
+
             <div id="dialog_customer_divmsg"></div>
         </form>
     </div>
 
-    <div>
-        @*Командная панель с кнопками управления таблицей*@
-        <input type="button" value="Добавить" onclick="NewClick()" autofocus class="btn btn-default" />
-        <input type="button" value="Изменить" onclick="EditClick()" autofocus class="btn btn-default" />
-        <input type="button" value="Удалить" onclick="DeleteClick()" autofocus class="btn btn-default" />
+<div id="customers_panel">
+    @*Командная панель с кнопками управления таблицей*@
+    <input name = "AddButton" type="button" value="Добавить" autofocus class="btn btn-default" />
+    <input name = "EditButton" type="button" value="Изменить"  class="btn btn-default" />
+    <input name = "DeleteButton" type="button" value="Удалить" class="btn btn-default" />
+</div>
+@*Невидимый элемент ввода, для получения фокуса на таблицу, для клавиатурного ввода*@
+<div id="customers_table_div">
+    @Html.Partial("_table", Model)
+</div>
 
-        @*Невидимый элемент ввода, для получения фокуса на таблицу, для клавиатурного ввода*@
-        <div id="customers_table_div">
-            @Html.Partial("_table", Model)
-        </div>
-    </div>
 
-    <script src="~/app/customers.index.js"></script>
-    <script src="~/app/customers.dialog.js"></script>
+<script>
+    System.import('app/customers.index.js');
+</script>
 
-    <script type="text/javascript" language="javascript">
-
-        @*Нажатие на кноку Удалить*@
-        function DeleteClick() {
-            customers_table.Delete();
-        };
-
-        @*Нажатие на кнопку Изменить*@
-        function EditClick() {
-            customers_table.Edit();
-        }
-
-        @*Press New button*@
-        function NewClick() {
-            OpenEditDialog(true);
-          }
-
-    </script>
-
-    <style>
-        @*Стиль для подсвечивания строки таблицы*@ .table-striped tbody tr.highlight td {
-            background-color: bisque;
-        }
-    </style>
+<style>
+    @*Стиль для подсвечивания строки таблицы*@ 
+    .table-striped tbody tr.highlight td {
+        background-color: bisque;
+    }
+</style>

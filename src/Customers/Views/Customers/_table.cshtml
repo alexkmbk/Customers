@@ -30,24 +30,3 @@
             </tbody>
         </table>
     }
-        
- <script>
-      @*Выделим первую строку*@
-      $('#customers_table > tbody > tr').first().addClass('highlight');
-</script>
-
-
-@*
-
-    <td>@e.CustomerName</td>
-    <td>@e.BusinessType.BusinessTypeName</td>
-    <td><input type="button" value="Edit" onclick="EditClick('@e.CustomerId', '@e.CustomerName', '@e.BusinessType.BusinessTypeName')"/></td>
-    <td>
-        @using (Html.BeginForm("Delete", "Customers", FormMethod.Post))
-        {
-            <input type="hidden" value="@e.CustomerId" name="CustomerId" />
-            <input type="submit" value="Delete" />
-        }
-    </td>
-
-*@

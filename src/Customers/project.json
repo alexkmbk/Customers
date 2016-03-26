@@ -11,6 +11,7 @@
     "EntityFramework7.Npgsql": "3.1.0-rc1-3",
     "jquery.TypeScript.DefinitelyTyped": "3.0.4",
     "jquery.window.TypeScript.DefinitelyTyped": "0.0.3",
+    "jqueryui.TypeScript.DefinitelyTyped": "1.4.6",
     "Microsoft.AspNet.Authentication.Cookies": "1.0.0-rc1-final",
     "Microsoft.AspNet.Diagnostics.Entity": "7.0.0-rc1-final",
     "Microsoft.AspNet.Identity.EntityFramework": "3.0.0-rc1-final",
