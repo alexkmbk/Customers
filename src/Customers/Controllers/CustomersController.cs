@@ -167,10 +167,11 @@ namespace Customers.Controllers
         [Authorize]
         public IActionResult Delete(int CustomerId)
         {
-
             var entity = _ctx.Customers.FirstOrDefault(e => e.CustomerId == CustomerId);
             if (entity != null)
             {
+                var accounts = _ctx.BankAccounts.Where(e => e.Customer.CustomerId == CustomerId);
+                _ctx.RemoveRange(accounts);
                 _ctx.Remove(entity);
                 _ctx.SaveChanges();
 
