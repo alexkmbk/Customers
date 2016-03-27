@@ -52,9 +52,9 @@ namespace Customers.Controllers
             ViewBag.BusinessTypes = (from type in _ctx.BusinessTypes
                                      select type).ToList();
             if (ajax)
-                return Json(new { view = RenderPartialViewToString("Index", GetCustomers()) });
+                return Json(new { view = RenderPartialViewToString("CustomersIndex", GetCustomers()) });
             else
-                return View("Index", GetCustomers());
+                return View("CustomersIndex", GetCustomers());
         }
 
         // Список BankAccounts
@@ -179,7 +179,7 @@ namespace Customers.Controllers
             ViewBag.Title = "Customers";
             ViewBag.BusinessTypes = (from type in _ctx.BusinessTypes
                                      select type).ToList();
-            return View("Index", GetCustomers());
+            return View("CustomersIndex", GetCustomers());
         }
 
         [HttpPost]
@@ -204,7 +204,7 @@ namespace Customers.Controllers
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
             // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
             // контрагентов в виде строки
-            return Json(new { isOk = true, Errors = "", view= RenderPartialViewToString("_table", GetCustomers()), CustomerId = customer.CustomerId });
+            return Json(new { isOk = true, Errors = "", view= RenderPartialViewToString("_CustomersTable", GetCustomers()), CustomerId = customer.CustomerId });
             
         }
 
@@ -229,7 +229,7 @@ namespace Customers.Controllers
             _ctx.SaveChanges();
 
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
-            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_table", GetCustomers()) });
+            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_CustomersTable", GetCustomers()) });
 
         }
 

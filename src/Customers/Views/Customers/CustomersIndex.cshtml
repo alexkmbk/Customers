@@ -46,9 +46,10 @@
     <input name = "EditButton" type="button" value="Изменить"  class="btn btn-default" />
     <input name = "DeleteButton" type="button" value="Удалить" class="btn btn-default" />
 </div>
-@*Невидимый элемент ввода, для получения фокуса на таблицу, для клавиатурного ввода*@
+
+@*Таблица с контрагентами*@
 <div id="customers_table_div">
-    @Html.Partial("_table", Model)
+    @Html.Partial("_CustomersTable", Model)
 </div>
 
 
