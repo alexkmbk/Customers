@@ -12,7 +12,7 @@ var customers_table = new Table("customers_table", false, cols);
 var panel = $("#customers_panel");
 panel.find("input[name='AddButton']").get(0).onclick = customers_table.Add;
 panel.find("input[name='EditButton']").get(0).onclick = customers_table.Edit;
-panel.find("input[name='DeleteButton']").get(0).onclick = customers_table.Delete;  
+panel.find("input[name='DeleteButton']").get(0).onclick = customers_table.BeforeDelete;  
 
 
 panel = $("#dialog_customer_panel");
@@ -30,6 +30,6 @@ $('#customers_table').get(0).addEventListener("customers_table_New", function (e
 });
 
 //Удалить запись
-$('#customers_table').get(0).addEventListener("customers_table_Delete", function (e: any) {
+$('#customers_table').get(0).addEventListener("customers_table_BeforeDelete", function (e: any) {
     window.location.href = "/Customers/Delete?CustomerId=" + e.detail['CustomerId'];
 });

@@ -1,42 +1,173 @@
 // Данный модуль загружается глобально и всегда находится в памяти
 ///<reference path="../lib/jquery/jquery.d.ts" />
 ///<reference path="./keyboard_code_enums.ts"/>
+function SetAutoComplete(input, col, table) {
+    //var parentForm = this.parentForm;
+    input.autocomplete({
+        source: col.AutoCompleteSource,
+        minLength: 1,
+        select: function (event, ui) {
+            ui.item ?
+                $("#" + col.AutoCompleteID + "_input").val(ui.item.Id) :
+                $("#" + col.AutoCompleteID + "_input").val("");
+        },
+        open: function () {
+            var z = window.document.defaultView.getComputedStyle(table.parentForm.get(0)).getPropertyValue('z-index');
+            table.autoComplete.zIndex(10 + (+z));
+        },
+    });
+    table.autoComplete = input.autocomplete("widget");
+    table.autoComplete.insertAfter(table.parentForm);
+}
 var Column = (function () {
     function Column(options) {
         if (options) {
             this.name = options.name;
             this.isVisible = options.isVisible;
+            this.isAutoComplete = options.isAutoComplete;
+            this.AutoCompleteSource = options.AutoCompleteSource;
+            this.AutoCompleteID = options.AutoCompleteID;
         }
     }
     return Column;
 })();
 var Table = (function () {
-    function Table(name, isEditable, columns) {
+    function Table(name, isEditable, columns, parentForm, IdColumn) {
         var _this = this;
         if (columns === void 0) { columns = null; }
-        this.Delete = function () {
+        if (parentForm === void 0) { parentForm = null; }
+        if (IdColumn === void 0) { IdColumn = null; }
+        this.BeforeDelete = function () {
             var rowData = new Array();
             var columns = _this.columns;
-            $('.highlight > td').each(function (index, value) {
+            _this.obj.find('.highlight > td').each(function (index, value) {
                 rowData[columns[index].name] = $(this).html();
             });
-            var event = new CustomEvent(_this.name + "_Delete", { 'detail': rowData });
+            var event = new CustomEvent(_this.name + "_BeforeDelete", { 'detail': rowData });
             _this.elem.dispatchEvent(event);
         };
         this.Edit = function () {
+            _this.EditCell(null);
+        };
+        this.EditCell = function (_row, currentcell) {
+            if (_row === void 0) { _row = null; }
+            if (currentcell === void 0) { currentcell = null; }
             var rowData = new Array();
             var columns = _this.columns;
-            $(_this.idSelector + ' .highlight').find("td").each(function (index, value) {
-                rowData[columns[index].name] = $(this).html();
+            var isEditable = _this.isEditable;
+            var row;
+            //var SetAutoComplete = this.SetAutoComplete;
+            if (_row == null)
+                row = $(_this.idSelector + ' .highlight');
+            else
+                row = _row;
+            var table = _this;
+            row.find("td").each(function (index, value) {
+                var cell = $(this);
+                var val;
+                var input;
+                var col = columns[index];
+                // Обработка непонятной ситуации, когда, почему-то 
+                // остается не удаленным элемент редактирования
+                if (cell.find("input").length != 0) {
+                    input = cell.find("input");
+                    val = input.val();
+                    if (col.isAutoComplete) {
+                        $(this).autocomplete("destroy");
+                        $(this).removeData('autocomplete');
+                    }
+                    input.remove();
+                    cell.html("");
+                }
+                else
+                    val = cell.html();
+                rowData[col.name] = val;
+                if (isEditable) {
+                    input = $(document.createElement('input'));
+                    input.attr("id", col.name + "_input");
+                    input.attr("value", val);
+                    input.attr("prevVal", val);
+                    input.attr("type", col.isVisible ? "text" : "hidden");
+                    input.addClass("tableinput");
+                    cell.html("");
+                    cell.append(input);
+                    if (col.isAutoComplete) {
+                        SetAutoComplete(input, col, table);
+                    }
+                }
             });
+            if (isEditable) {
+                if (currentcell == null) {
+                    row.find("input").first().focus();
+                }
+                else {
+                    currentcell.find("input").first().focus();
+                }
+                _this.inEditing = true;
+            }
             var event = new CustomEvent(_this.name + "_Pick", { 'detail': rowData });
             _this.elem.dispatchEvent(event);
         };
+        this.WasChanged = function () {
+            _this.obj.find(".tableinput").each(function (index, value) {
+                if ($(this).attr("prevVal") != $(this).val())
+                    return true;
+            });
+            return false;
+        };
         this.Add = function () {
+            // Удалим пустую строку в пустой таблице
+            $('.EmptyTable tr:last').first().remove();
+            $('.EmptyTable').removeClass("EmptyTable");
+            var emptyRowStr = "<tr>";
+            for (var i = 0; i < _this.columns.length; i++) {
+                emptyRowStr = emptyRowStr + (_this.columns[i].isVisible ? "<td></td>" : "<td style='display:none;'></td>");
+            }
+            emptyRowStr = emptyRowStr + "</tr>";
+            _this.obj.find('tr:last').first().after(emptyRowStr);
+            _this.EditCell(_this.obj.find('tr:last').first());
             var event = new CustomEvent(_this.name + "_New");
             _this.elem.dispatchEvent(event);
         };
+        this.EndEditing = function (ColIdValue) {
+            var columns = _this.columns;
+            if (ColIdValue)
+                $("#" + _this.IdColumn.name + "_input").val(ColIdValue);
+            _this.obj.find(".tableinput").parent().parent().find("input").each(function (index, value) {
+                var td = $(this).parent();
+                var val = $(this).val();
+                if (columns[index].isAutoComplete) {
+                    $(this).autocomplete("destroy");
+                    $(this).removeData('autocomplete');
+                }
+                $(this).remove();
+                td.html(val);
+            });
+        };
         // Обработка ввода с клавиатуры 
+        this.InputKeydown = function (e) {
+            // вход в режим редактирования ячейки при нажатии клавише ENTER
+            if (e.keyCode == keyCodes.ENTER) {
+                e.preventDefault();
+                var input = $(e.target);
+                var td = input.parent();
+                if (td.parent().children().index(td) < td.parent().find("input[type!='hidden']").length - 1) {
+                    td.next('td').find("input").first().focus();
+                }
+                else {
+                    var row = input.parent().parent();
+                    var rowData = new Array();
+                    var columns = _this.columns;
+                    td.parent().find("input").each(function (index, value) {
+                        //rowdata[index] = $(this).val();
+                        rowData[columns[index].name] = $(this).val();
+                    });
+                    var event = new CustomEvent(_this.name + "_SaveTable", { 'detail': rowData });
+                    _this.elem.dispatchEvent(event);
+                    $(_this.idSelector + "_input").focus();
+                }
+            }
+        };
         // Если нажали клавишу внутри таблицы
         this.Keydown = function (e) {
             // перемещение фокуса строки на одну строку вниз
@@ -44,31 +175,56 @@ var Table = (function () {
                 e.preventDefault();
                 $(_this.idSelector + ' .highlight').next().addClass('highlight').siblings().removeClass('highlight');
             }
-            // перемещение фокуса строки на одну строку вверх
-            if (e.keyCode == keyCodes.UP_ARROW) {
+            else if (e.keyCode == keyCodes.UP_ARROW) {
                 e.preventDefault();
                 $(_this.idSelector + ' .highlight').prev().addClass('highlight').siblings().removeClass('highlight');
             }
-            // вход в режим редактирования ячейки при нажатии клавише ENTER
-            if (e.keyCode == keyCodes.ENTER) {
-                e.preventDefault();
-                _this.Edit();
-            }
-            // INSERT
-            if (e.keyCode == keyCodes.INSERT) {
+            else if (e.keyCode == keyCodes.INSERT) {
                 e.preventDefault();
                 _this.Add();
             }
-            // DELETE
-            if (e.keyCode == keyCodes.DELETE) {
+            else if (e.keyCode == keyCodes.DELETE) {
                 e.preventDefault();
                 _this.Delete();
+            }
+            else if (e.keyCode == keyCodes.ENTER) {
+                e.preventDefault();
+                _this.Edit();
+            }
+        };
+        this.DocClick = function (e) {
+            if (_this.inEditing && (!(e.toElement.classList.contains(".tableinput")))) {
+                if (_this.WasChanged()) {
+                    e.preventDefault();
+                    _this.obj.find(".tableinput").first().focus();
+                }
+                else
+                    _this.EndEditing(undefined);
             }
         };
         // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
         this.Click = function (e) {
-            if (e.toElement.id == _this.name || $(e.toElement).parents().length) {
+            if ((e.toElement.id == _this.name || $(e.toElement).parents().length) && ($(e.target).prop("tagName").toLowerCase() != "input")) {
                 $(_this.idSelector + '_input').focus();
+            }
+        };
+        // подсвечивание строки
+        this.ClickOnRow = function (e) {
+            var target = $(e.target);
+            var tagName = target.prop("tagName").toLowerCase();
+            var targetRow;
+            if (tagName == "input")
+                targetRow = target.parent().parent();
+            else
+                targetRow = target.parent();
+            targetRow.addClass('highlight').siblings().removeClass('highlight');
+            if (_this.isEditable) {
+                // Попытка захватить фокус если редактируется строка (нужны еще доработки)
+                if ((_this.inEditing) && (e.toElement.className.indexOf("tableinput") == -1)) {
+                    e.preventDefault();
+                    //$(":focus").focus();
+                    _this.obj.find(".tableinput").first().focus();
+                }
             }
         };
         // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
@@ -82,17 +238,22 @@ var Table = (function () {
         this.idSelector = '#' + name;
         this.obj = $(this.idSelector);
         this.elem = this.obj.get(0);
-        $(this.idSelector + '_div').on('keydown', this.idSelector + '_input', this.Keydown);
+        this.inEditing = false;
+        this.parentForm = parentForm;
+        this.IdColumn = IdColumn;
+        var parent = $(this.elem.parentNode);
+        parent.on('keydown', this.idSelector + '_input', this.Keydown);
         this.obj.on('click', "tbody", this.Click);
-        $(this.idSelector + '_div').on('click', this.idSelector + ' > tbody > tr', this.ClickOnRow);
-        $(this.idSelector + '_div').on('dblclick', this.idSelector + ' > tbody > tr > td', this.DblClickOnRow);
+        parent.on('click', this.idSelector + ' > tbody > tr', this.ClickOnRow);
+        parent.on('dblclick', this.idSelector + ' > tbody > tr > td', this.DblClickOnRow);
+        parent.on('keydown', '.tableinput', this.InputKeydown);
+        $(document).on('click', this.DocClick);
         //Выделим первую строку
-        $(this.idSelector + ' > tbody > tr').first().addClass('highlight');
+        this.obj.find('tbody > tr').first().addClass('highlight');
     }
-    // подсвечивание строки
-    Table.prototype.ClickOnRow = function () {
-        $(this).addClass('highlight').siblings().removeClass('highlight');
+    Table.prototype.Delete = function () {
+        this.obj.find('.highlight > td').remove();
+        this.obj.find('tbody > tr').first().addClass('highlight');
     };
-    ;
     return Table;
 })();

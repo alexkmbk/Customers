@@ -1,7 +1,7 @@
 ///<reference path="../lib/jquery/jqueryui.d.ts" />
 ///<reference path="../lib/jquery/jquery.d.ts" />
 System.register([], function(exports_1) {
-    var autoComplete, input, dlg, saving, isNew, customerId;
+    var autoComplete, input, dlg, saving, isNew, customerId, accountdialog_table;
     function SetDialogActive(dlg, data) {
         $('#bankaccounts_table_div :input').removeAttr('disabled');
         $('#bankaccounts_table_div').removeClass('disabled');
@@ -9,11 +9,108 @@ System.register([], function(exports_1) {
         dlg.attr("isNew", "false");
         dlg.dialog('option', 'title', "Контрагент " + $("#form_customer input[name='CustomerName']").val());
     }
+    function InitDialog() {
+        var cols = [new Column({ name: "BankAccountNumber", isVisible: true }),
+            new Column({ name: "BankName", isVisible: true, isAutoComplete: true, AutoCompleteSource: "Customers/GetAutocompleteBankList", AutoCompleteID: "BankId" }),
+            new Column({ name: "BankId", isVisible: false }),
+            new Column({ name: "BankAccountId", isVisible: false })];
+        accountdialog_table = new Table("bankaccounts_table", true, cols, dlg, cols[3]);
+        var panel = $("#bankaccounts_panel");
+        panel.find("input[name='NewButton']").get(0).onclick = accountdialog_table.Add;
+        panel.find("input[name='EditButton']").get(0).onclick = accountdialog_table.Edit;
+        panel.find("input[name='DeleteButton']").get(0).onclick = accountdialog_table.BeforeDelete;
+        var dlgform = $("#form_customer").get(0).onsubmit = SaveAndClose;
+        dlg.dialog({
+            width: "50%",
+            beforeClose: function (e, ui) {
+                // если нажата клавиша ESC и выполняется редактирование ячейки,
+                // то необходимо завершить редактирование не сохраняя введенные данные
+                if (e.keyCode == 27) {
+                    var inputrow = $("#bankaccounts_table_inputrow");
+                    if (inputrow.children("input").length == 0) {
+                        e.preventDefault();
+                        var td;
+                        // перенесем элементы редактирования обратно
+                        var inputrow = $("#bankaccounts_table_inputrow");
+                        $(".tableinput").parent().parent().find("input").each(function (index, value) {
+                            td = $(this).parent();
+                            $(this).attr("type", "hidden");
+                            inputrow.append($(this));
+                            td.html($(this).attr("prevVal"));
+                        });
+                        if (td.parent().children().eq(3).html() == "") {
+                            td.parent().remove();
+                        }
+                        $("#bankaccounts_table_input").focus();
+                    }
+                }
+            }
+        });
+        //Удалить запись
+        $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_BeforeDelete", function (e) {
+            var rowdata = e.detail;
+            $.ajax({
+                type: 'POST',
+                url: 'Customers/DeleteBankAccount',
+                data: { BankAccountId: rowdata['BankAccountId'] },
+                success: function (data) {
+                    if (data["isOk"]) {
+                        accountdialog_table.Delete(); // удалить строку в диалоге
+                    }
+                    else {
+                        var myDiv = document.getElementById("dialog_customer_divmsg");
+                        myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                    }
+                },
+                error: function (xhr, str) {
+                    var myDiv = document.getElementById("dialog_customer_divmsg");
+                    myDiv.innerHTML = "Ошибка записи: " + xhr.responseText;
+                }
+            });
+        });
+        $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_SaveTable", function (e) {
+            var action;
+            var rowdata;
+            if (saving)
+                return;
+            saving = true;
+            if (e.detail["BankAccountId"] == "") {
+                action = 'Customers/AddBankAccount';
+                rowdata = { BankAccountNumber: e.detail["BankAccountNumber"], BankId: e.detail["BankId"], CustomerId: customerId };
+            }
+            else {
+                action = 'Customers/UpdateBankAccount';
+                rowdata = { BankAccountNumber: e.detail["BankAccountNumber"], BankId: e.detail["BankId"], CustomerId: customerId, BankAccountId: e.detail["BankAccountId"] };
+            }
+            $.ajax({
+                type: 'POST',
+                url: action,
+                data: rowdata,
+                success: function (data) {
+                    if (data["isOk"]) {
+                        accountdialog_table.EndEditing(data["BankAccountId"]);
+                        saving = false;
+                    }
+                    else {
+                        var myDiv = document.getElementById("dialog_customer_divmsg");
+                        myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
+                        saving = false;
+                    }
+                },
+                error: function (xhr, str) {
+                    var myDiv = document.getElementById("dialog_customer_divmsg");
+                    myDiv.innerHTML = "Ошибка записи: " + xhr.responseText;
+                    saving = false;
+                }
+            });
+        });
+    }
     // Открывает диалог редактирования свойств
     function OpenEditDialog(_isNew, _CustomerId, CustomerName, BusinessTypeName) {
         if (_CustomerId === void 0) { _CustomerId = null; }
         if (CustomerName === void 0) { CustomerName = null; }
         if (BusinessTypeName === void 0) { BusinessTypeName = null; }
+        var myDiv = document.getElementById("dialog_customer_divmsg").innerHTML = "";
         // Удалим ранее созданный диалог, чтобы очистить все свойства
         if (dlg.hasClass('ui-dialog-content')) {
             dlg.dialog('destroy');
@@ -40,6 +137,7 @@ System.register([], function(exports_1) {
                 // Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу BankAccountsTable
                 if (data["isOk"]) {
                     $('#bankaccounts_table_div').html(data["view"]);
+                    InitDialog();
                     if (isNew) {
                         // Установим все поля ввода банковских счетов неактивными, поскольку контрагент еще не записан в базу
                         $('#bankaccounts_table_div :input').attr('disabled', "true");
@@ -47,29 +145,6 @@ System.register([], function(exports_1) {
                     }
                     else
                         SetDialogActive(dlg, data);
-                    var panel = $("#bankaccounts_panel");
-                    panel.find("input[name='NewButton']").get(0).onclick = NewBankAccountClick;
-                    panel.find("input[name='EditButton']").get(0).onclick = EditBankAccountClick;
-                    panel.find("input[name='DeleteButton']").get(0).onclick = DeleteBankAccountClick;
-                    // Autocomplete
-                    $(function () {
-                        input = $("#BankName_input");
-                        input.autocomplete({
-                            source: 'Customers/GetAutocompleteBankList',
-                            minLength: 1,
-                            select: function (event, ui) {
-                                ui.item ?
-                                    $("#BankId_input").val(ui.item.Id) :
-                                    $("#BankId_input").val("");
-                            },
-                            open: function () {
-                                var z = window.document.defaultView.getComputedStyle(dlg.get(0)).getPropertyValue('z-index');
-                                autoComplete.zIndex(z + 10);
-                            }
-                        });
-                        autoComplete = input.autocomplete("widget");
-                        autoComplete.insertAfter(dlg.parent());
-                    });
                 }
                 else {
                     // Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg
@@ -82,32 +157,6 @@ System.register([], function(exports_1) {
             error: function (xhr, str) {
                 var myDiv = document.getElementById("dialog_customer_divmsg");
                 myDiv.innerHTML = "Ошибка полученния списка банковских счетов: " + xhr.responseText;
-            }
-        });
-        dlg.dialog({
-            width: "50%",
-            beforeClose: function (e, ui) {
-                // если нажата клавиша ESC и выполняется редактирование ячейки,
-                // то необходимо завершить редактирование не сохраняя введенные данные
-                if (e.keyCode == 27) {
-                    var inputrow = $("#bankaccounts_table_inputrow");
-                    if (inputrow.children("input").length == 0) {
-                        e.preventDefault();
-                        var td;
-                        // перенесем элементы редактирования обратно
-                        var inputrow = $("#bankaccounts_table_inputrow");
-                        $(".tableinput").parent().parent().find("input").each(function (index, value) {
-                            td = $(this).parent();
-                            $(this).attr("type", "hidden");
-                            inputrow.append($(this));
-                            td.html($(this).attr("prevVal"));
-                        });
-                        if (td.parent().children().eq(3).html() == "") {
-                            td.parent().remove();
-                        }
-                        $("#bankaccounts_table_input").focus();
-                    }
-                }
             }
         });
     }
@@ -187,51 +236,7 @@ System.register([], function(exports_1) {
         });
     }
     //Обработка событий связанных с редактирвоанием ТЧ
-    function SaveData(rowdata) {
-        var action;
-        var rowdata;
-        if (saving)
-            return;
-        saving = true;
-        if (rowdata[3] == "") {
-            action = 'Customers/AddBankAccount';
-            rowdata = { BankAccountNumber: rowdata[0], BankId: rowdata[2], CustomerId: customerId };
-        }
-        else {
-            action = 'Customers/UpdateBankAccount';
-            rowdata = { BankAccountNumber: rowdata[0], BankId: rowdata[2], CustomerId: customerId, BankAccountId: rowdata[3] };
-        }
-        $.ajax({
-            type: 'POST',
-            url: action,
-            data: rowdata,
-            success: function (data) {
-                if (data["isOk"]) {
-                    // перенесем элементы редактирования обратно
-                    var inputrow = $("#bankaccounts_table_inputrow");
-                    $(".tableinput").parent().parent().find("input").each(function (index, value) {
-                        var td = $(this).parent();
-                        $(this).attr("type", "hidden");
-                        inputrow.append($(this));
-                        td.html($(this).val());
-                    });
-                    saving = false;
-                }
-                else {
-                    var myDiv = document.getElementById("dialog_customer_divmsg");
-                    myDiv.innerHTML = "Ошибка записи: " + data["Errors"];
-                    saving = false;
-                }
-            },
-            error: function (xhr, str) {
-                var myDiv = document.getElementById("dialog_customer_divmsg");
-                myDiv.innerHTML = "Ошибка записи: " + xhr.responseText;
-                saving = false;
-            }
-        });
-    }
-    function EditRow(row, currentcell) {
-        if (currentcell === void 0) { currentcell = null; }
+    /*function EditRow(row: JQuery, currentcell = null) {
         var cells = row.find("td");
         //var col = row.children().index(cell);
         $("#bankaccounts_table_inputrow").find("input").each(function (index, value) {
@@ -242,14 +247,16 @@ System.register([], function(exports_1) {
             cells.eq(index).html("");
             cells.eq(index).append($(this));
         });
+    
         if (!currentcell) {
             row.find("input").first().focus();
         }
         else {
             currentcell.find("input").first().focus();
         }
-    }
-    function DeleteRow(row) {
+    }*/
+    /*
+    function DeleteRow(row: JQuery) {
         $.ajax({
             type: 'POST',
             url: 'Customers/DeleteBankAccount',
@@ -268,31 +275,115 @@ System.register([], function(exports_1) {
                 myDiv.innerHTML = "Ошибка записи: " + xhr.responseText;
             }
         });
-    }
+    }*/
+    // Обработка ввода с клавиатуры и указателя
+    /*
+    // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
+    $("body").click(function (e: any) {
+    
+        // Попытка захватить фокус если редактируется строка (нужны еще доработки)
+        if (($("#bankaccounts_table_inputrow").find("input").length == 0) && (e.target.className.indexOf("tableinput") == -1)) {
+            e.preventDefault();
+            //$(":focus").focus();
+            $(".tableinput").first().focus();
+        }
+        else if (e.target.id == "bankaccounts_table" || $(e.target).parents("#bankaccounts_table").length) {
+            if (e.target.className.indexOf("tableinput") == -1) {
+                $("#bankaccounts_table_input").focus();
+            }
+    
+        }
+    });
+    */
+    /*
     // Press Добавить button
-    function NewBankAccountClick() {
+    export function NewBankAccountClick() {
+    
         // Удалим пустую строку в пустой таблице
         $('.EmptyTable tr:last').first().remove();
         $('.EmptyTable').removeClass("EmptyTable");
+    
         $('#bankaccounts_table tr:last').after("<tr> \
-       <td></td> \
-       <td></td> \
-       <td style='display:none;'></td> \
-       <td style='display:none;'></td> \
-       </tr>)");
-        EditRow($('#bankaccounts_table tr:last'));
+           <td></td> \
+           <td></td> \
+           <td style='display:none;'></td> \
+           <td style='display:none;'></td> \
+           </tr>)");
+        accountdialog_table.EditCell($('#bankaccounts_table tr:last'));
     }
-    exports_1("NewBankAccountClick", NewBankAccountClick);
+    */
     // Press Изменить button
-    function EditBankAccountClick() {
+    /*export function EditBankAccountClick() {
+    
         EditRow($('#bankaccounts_table .highlight'));
-    }
-    exports_1("EditBankAccountClick", EditBankAccountClick);
+    }*/
     // Press Удалить button
-    function DeleteBankAccountClick() {
+    /*export function DeleteBankAccountClick() {
+    
         DeleteRow($('#bankaccounts_table .highlight'));
-    }
-    exports_1("DeleteBankAccountClick", DeleteBankAccountClick);
+    }*/
+    //Обработка событий связанных с редактирвоанием ТЧ
+    // подсвечивание строки
+    /*$('#bankaccounts_table_div').on('click', '#bankaccounts_table > tbody > tr', function () {
+        $(this).addClass('highlight').siblings().removeClass('highlight');
+    });*/
+    // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
+    /*$('#bankaccounts_table_div').on('dblclick', '#bankaccounts_table > tbody > tr > td', function () {
+        EditRow($(this).parent(), $(this));
+    });*/
+    /*
+    $(document).on('keydown', function (e) {
+    
+        // если  нажата клавиша ENTER во время редактирования ячейки,
+        // то необходимо сохранить введенные данные и перейти к редактированию следующей колонки
+        if (e.keyCode == $.ui.keyCode.ENTER) {
+            if (e.target.className.indexOf("tableinput") > -1) {
+                e.preventDefault();
+                var input = $("#" + e.target.id);
+                var td = input.parent();
+                if (td.parent().children().index(td) < td.parent().find("input[type!='hidden']").length - 1) {
+                    td.next('td').find("input").first().focus();
+                }
+                else {
+                    var row = input.parent().parent();
+                    var rowdata = new Array();
+                    td.parent().find("input").each(function (index, value) {
+                        rowdata[index] = $(this).val();
+                    });
+    
+                    SaveData(rowdata);
+                    $("#bankaccounts_table_input").focus();
+                }
+            }
+            // Если нажат ENTER но редактирвоание строки еще не закончено, то игнорируем ввод
+            else if ($("#bankaccounts_table_inputrow").children("input").length == 0) {
+                e.preventDefault();
+            }
+        }
+    
+    });
+    */
+    // Если нажали клавишу внутри таблицы
+    /*$('#bankaccounts_table_input').on('keydown', function (e) {
+        // перемещение фокуса строки на одну строку вниз
+        if (e.keyCode == $.ui.keyCode.DOWN) {
+            e.preventDefault();
+            $('#bankaccounts_table .highlight').next().addClass('highlight').siblings().removeClass('highlight');
+        }
+    
+        // перемещение фокуса строки на одну строку вверх
+        if (e.keyCode == $.ui.keyCode.UP) {
+            e.preventDefault();
+            $('#bankaccounts_table .highlight').prev().addClass('highlight').siblings().removeClass('highlight');
+        }
+        // вход в режим редактирования ячейки при нажатии клавише ENTER
+        if (e.keyCode == $.ui.keyCode.ENTER) {
+            if (e.target.className != "tableinput") {
+                e.preventDefault();
+                EditRow($('#bankaccounts_table .highlight'));
+            }
+        }
+    });*/
     function msg(str) {
         var myDiv = document.getElementById("dialog_customer_divmsg");
         myDiv.innerHTML = str;
@@ -303,76 +394,6 @@ System.register([], function(exports_1) {
             dlg = $("#dialog_customer");
             saving = false;
             isNew = true;
-            // Обработка ввода с клавиатуры и указателя
-            // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
-            $("body").click(function (e) {
-                // Попытка захватить фокус если редактируется строка (нужны еще доработки)
-                if (($("#bankaccounts_table_inputrow").find("input").length == 0) && (e.target.className.indexOf("tableinput") == -1)) {
-                    e.preventDefault();
-                    //$(":focus").focus();
-                    $(".tableinput").first().focus();
-                }
-                else if (e.target.id == "bankaccounts_table" || $(e.target).parents("#bankaccounts_table").length) {
-                    if (e.target.className.indexOf("tableinput") == -1) {
-                        $("#bankaccounts_table_input").focus();
-                    }
-                }
-            });
-            //Обработка событий связанных с редактирвоанием ТЧ
-            // подсвечивание строки
-            $('#bankaccounts_table_div').on('click', '#bankaccounts_table > tbody > tr', function () {
-                $(this).addClass('highlight').siblings().removeClass('highlight');
-            });
-            // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
-            $('#bankaccounts_table_div').on('dblclick', '#bankaccounts_table > tbody > tr > td', function () {
-                EditRow($(this).parent(), $(this));
-            });
-            $(document).on('keydown', function (e) {
-                // если  нажата клавиша ENTER во время редактирования ячейки,
-                // то необходимо сохранить введенные данные и перейти к редактированию следующей колонки
-                if (e.keyCode == $.ui.keyCode.ENTER) {
-                    if (e.target.className.indexOf("tableinput") > -1) {
-                        e.preventDefault();
-                        var input = $("#" + e.target.id);
-                        var td = input.parent();
-                        if (td.parent().children().index(td) < td.parent().find("input[type!='hidden']").length - 1) {
-                            td.next('td').find("input").first().focus();
-                        }
-                        else {
-                            var row = input.parent().parent();
-                            var rowdata = new Array();
-                            td.parent().find("input").each(function (index, value) {
-                                rowdata[index] = $(this).val();
-                            });
-                            SaveData(rowdata);
-                            $("#bankaccounts_table_input").focus();
-                        }
-                    }
-                    else if ($("#bankaccounts_table_inputrow").children("input").length == 0) {
-                        e.preventDefault();
-                    }
-                }
-            });
-            // Если нажали клавишу внутри таблицы
-            $('#bankaccounts_table_input').on('keydown', function (e) {
-                // перемещение фокуса строки на одну строку вниз
-                if (e.keyCode == $.ui.keyCode.DOWN) {
-                    e.preventDefault();
-                    $('#bankaccounts_table .highlight').next().addClass('highlight').siblings().removeClass('highlight');
-                }
-                // перемещение фокуса строки на одну строку вверх
-                if (e.keyCode == $.ui.keyCode.UP) {
-                    e.preventDefault();
-                    $('#bankaccounts_table .highlight').prev().addClass('highlight').siblings().removeClass('highlight');
-                }
-                // вход в режим редактирования ячейки при нажатии клавише ENTER
-                if (e.keyCode == $.ui.keyCode.ENTER) {
-                    if (e.target.className != "tableinput") {
-                        e.preventDefault();
-                        EditRow($('#bankaccounts_table .highlight'));
-                    }
-                }
-            });
             // Обработка ввода с клавиатуры
             // нажатие ENTER в поле CustomerName - переход на следующее поле
             dlg.find("input[name='CustomerName']").keypress(function (e) {

@@ -259,9 +259,8 @@ namespace Customers.Controllers
             _ctx.SaveChanges();
 
             Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
-            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
-            // контрагентов в виде строки
-            return Json(new { isOk = true, Errors = "" });
+
+            return Json(new { isOk = true, Errors = "", BankAccountId = bankAccount.BankAccountId });
 
         }
 
