@@ -116,7 +116,6 @@ class Table {
         var columns = this.columns;
         var isEditable = this.isEditable;
         var row: JQuery;
-        //var SetAutoComplete = this.SetAutoComplete;
         if (_row == null)
             row = $(this.idSelector + ' .highlight');
         else row = _row;
