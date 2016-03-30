@@ -37,6 +37,7 @@ var Table = (function () {
         if (columns === void 0) { columns = null; }
         if (parentForm === void 0) { parentForm = null; }
         if (IdColumn === void 0) { IdColumn = null; }
+        this.dontEndEditing = false;
         this.BeforeDelete = function () {
             var rowData = new Array();
             var columns = _this.columns;
@@ -130,11 +131,12 @@ var Table = (function () {
             });
             return res;
         };
-        this.Add = function () {
+        this.Add = function (e) {
             if (_this.inEditing) {
                 _this.obj.find(".tableinput").first().focus();
                 return;
             }
+            _this.dontEndEditing = true;
             // Удалим пустую строку в пустой таблице
             $('.EmptyTable tr:last').first().remove();
             $('.EmptyTable').removeClass("EmptyTable");
@@ -163,6 +165,7 @@ var Table = (function () {
                 $(this).remove();
                 td.html(val);
             });
+            alert(_this.obj.find(".tableinput").parent().parent().html());
         };
         // Обработка ввода с клавиатуры 
         this.InputKeydown = function (e) {
@@ -213,6 +216,10 @@ var Table = (function () {
             }
         };
         this.DocClick = function (e) {
+            if (_this.dontEndEditing) {
+                _this.dontEndEditing = false;
+                return;
+            }
             if (_this.inEditing && (!(e.toElement.classList.contains("tableinput")))) {
                 if (_this.WasChanged()) {
                     e.preventDefault();

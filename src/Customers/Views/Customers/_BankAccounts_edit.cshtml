@@ -2,9 +2,6 @@
 
 <h4>@Html.ViewData["Title"]</h4>
 
-@*Общие данные формы редактирования таблицы*@
-<input id="CustomerId" type="hidden" value="@Html.ViewBag.CustomerId">
-
 <div id="bankaccounts_panel">
     <input name = "NewButton" type="button" value="Добавить"  autofocus class="btn btn-default" />
     <input name = "EditButton" type="button" value="Изменить" class="btn btn-default" />
@@ -54,14 +51,5 @@ else {
         </table>
 
    }
-
-@*Выделим первую строку*@
-@if (Model.Count() != 0)
-{
-    <script>
-        $('#bankaccounts_table > tbody > tr').first().addClass('highlight');
-    </script>
-}
-
 
         

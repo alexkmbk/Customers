@@ -5,7 +5,6 @@ System.register([], function(exports_1) {
     function SetDialogActive(dlg, data) {
         $('#bankaccounts_table_div :input').removeAttr('disabled');
         $('#bankaccounts_table_div').removeClass('disabled');
-        $("#CustomerId").val(data["CustomerId"]);
         dlg.attr("isNew", "false");
         dlg.dialog('option', 'title', "Контрагент " + $("#form_customer input[name='CustomerName']").val());
     }
@@ -119,7 +118,6 @@ System.register([], function(exports_1) {
             dlg.find("input[name='CustomerName']").val(CustomerName);
             dlg.find("input[name='CustomerId']").val(_CustomerId);
             dlg.find("select[name='BusinessTypeName']").val(BusinessTypeName);
-            dlg.attr('CustomerId', customerId);
             dlg.attr('title', 'Контрагент ' + CustomerName);
             customerId = _CustomerId;
         }

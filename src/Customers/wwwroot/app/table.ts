@@ -57,6 +57,7 @@ class Table {
     obj: JQuery;
     elem: HTMLElement;
     inEditing: boolean;
+    dontEndEditing: boolean = false;
     autoComplete: JQuery;
     public parentForm: JQuery;
 
@@ -127,7 +128,7 @@ class Table {
 
 
     public EditCell = (_row: JQuery = null, currentcell: JQuery = null) => {
-        var rowData = new Array();
+         var rowData = new Array();
         var columns = this.columns;
         var isEditable = this.isEditable;
         var row: JQuery;
@@ -198,12 +199,14 @@ class Table {
         return res;
     }
 
-    public Add = () => {
+    public Add = (e?: any) => {
 
         if (this.inEditing) {
             this.obj.find(".tableinput").first().focus();
             return;
         }
+
+        this.dontEndEditing = true;
 
         // Удалим пустую строку в пустой таблице
         $('.EmptyTable tr:last').first().remove();
@@ -238,7 +241,6 @@ class Table {
             $(this).remove();
             td.html(val);
         });
-
     }
 
     // Обработка ввода с клавиатуры 
@@ -302,7 +304,13 @@ class Table {
         }
     };
 
-    DocClick = (e: MouseEvent) => {
+    DocClick = (e:any) => {
+
+        if (this.dontEndEditing) {
+            this.dontEndEditing = false;
+            return;
+        }
+
         if (this.inEditing && (!(e.toElement.classList.contains("tableinput")))) {
             if (this.WasChanged()) {
                 e.preventDefault();
