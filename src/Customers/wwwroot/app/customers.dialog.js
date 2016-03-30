@@ -25,21 +25,9 @@ System.register([], function(exports_1) {
                 // если нажата клавиша ESC и выполняется редактирование ячейки,
                 // то необходимо завершить редактирование не сохраняя введенные данные
                 if (e.keyCode == 27) {
-                    var inputrow = $("#bankaccounts_table_inputrow");
-                    if (inputrow.children("input").length == 0) {
+                    if (accountdialog_table.inEditing) {
                         e.preventDefault();
-                        var td;
-                        // перенесем элементы редактирования обратно
-                        var inputrow = $("#bankaccounts_table_inputrow");
-                        $(".tableinput").parent().parent().find("input").each(function (index, value) {
-                            td = $(this).parent();
-                            $(this).attr("type", "hidden");
-                            inputrow.append($(this));
-                            td.html($(this).attr("prevVal"));
-                        });
-                        if (td.parent().children().eq(3).html() == "") {
-                            td.parent().remove();
-                        }
+                        accountdialog_table.EndEditing();
                         $("#bankaccounts_table_input").focus();
                     }
                 }

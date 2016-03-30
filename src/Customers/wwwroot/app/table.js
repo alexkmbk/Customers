@@ -61,9 +61,10 @@ var Table = (function () {
             }
             _this.EditCell(null);
         };
-        this.EditCell = function (_row, currentcell) {
+        this.EditCell = function (_row, currentcell, isNew) {
             if (_row === void 0) { _row = null; }
             if (currentcell === void 0) { currentcell = null; }
+            if (isNew === void 0) { isNew = false; }
             var rowData = new Array();
             var columns = _this.columns;
             var isEditable = _this.isEditable;
@@ -104,6 +105,7 @@ var Table = (function () {
                         input.addClass("tableinput");
                         cell.html("");
                         cell.append(input);
+                        cell.parent().attr("isNew", isNew ? "true" : "false");
                         if (col.isAutoComplete) {
                             SetAutoComplete(input, col, table);
                         }
@@ -146,16 +148,22 @@ var Table = (function () {
             }
             emptyRowStr = emptyRowStr + "</tr>";
             _this.obj.find('tr:last').first().after(emptyRowStr);
-            _this.EditCell(_this.obj.find('tr:last').first());
+            _this.EditCell(_this.obj.find('tr:last').first(), null, true);
             var event = new CustomEvent(_this.name + "_New");
             _this.elem.dispatchEvent(event);
         };
         this.EndEditing = function (ColIdValue) {
             _this.inEditing = false;
+            var inputs = _this.obj.find(".tableinput");
+            var row = inputs.eq(0).parent().parent();
+            if (!_this.WasChanged() && (row.attr("isNew") == "true")) {
+                row.remove();
+                return;
+            }
             var columns = _this.columns;
             if (ColIdValue)
                 $("#" + _this.IdColumn.name + "_input").val(ColIdValue);
-            _this.obj.find(".tableinput").parent().parent().find("input").each(function (index, value) {
+            inputs.each(function (index, value) {
                 var td = $(this).parent();
                 var val = $(this).val();
                 if (columns[index].isAutoComplete) {
@@ -165,7 +173,7 @@ var Table = (function () {
                 $(this).remove();
                 td.html(val);
             });
-            alert(_this.obj.find(".tableinput").parent().parent().html());
+            row.attr("isNew", "false");
         };
         // Обработка ввода с клавиатуры 
         this.InputKeydown = function (e) {

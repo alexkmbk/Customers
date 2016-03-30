@@ -56,7 +56,7 @@ class Table {
     idSelector: string;
     obj: JQuery;
     elem: HTMLElement;
-    inEditing: boolean;
+    public inEditing: boolean;
     dontEndEditing: boolean = false;
     autoComplete: JQuery;
     public parentForm: JQuery;
@@ -127,7 +127,7 @@ class Table {
     }
 
 
-    public EditCell = (_row: JQuery = null, currentcell: JQuery = null) => {
+    public EditCell = (_row: JQuery = null, currentcell: JQuery = null, isNew: boolean = false) => {
          var rowData = new Array();
         var columns = this.columns;
         var isEditable = this.isEditable;
@@ -170,6 +170,7 @@ class Table {
                     input.addClass("tableinput");
                     cell.html("");
                     cell.append(input);
+                    cell.parent().attr("isNew", isNew?"true":"false");
                     if (col.isAutoComplete) {
                         SetAutoComplete(input, col, table);
                     }
@@ -219,17 +220,25 @@ class Table {
         emptyRowStr = emptyRowStr + "</tr>";
 
         this.obj.find('tr:last').first().after(emptyRowStr);
-        this.EditCell(this.obj.find('tr:last').first());
+        this.EditCell(this.obj.find('tr:last').first(),null,true);
 
         var event = new CustomEvent(this.name + "_New");
         this.elem.dispatchEvent(event);
     }
 
-    public EndEditing = (ColIdValue) => {
+    public EndEditing = (ColIdValue?) => {
         this.inEditing = false;
+
+        var inputs = this.obj.find(".tableinput");
+        var row = inputs.eq(0).parent().parent();
+        if (!this.WasChanged() && (row.attr("isNew") == "true")) {
+            row.remove();
+            return;
+        }
+
         var columns = this.columns;
         if (ColIdValue) $("#" + this.IdColumn.name + "_input").val(ColIdValue);
-        this.obj.find(".tableinput").parent().parent().find("input").each(function (index, value) {
+        inputs.each(function (index, value) {
             var td = $(this).parent();
             var val = $(this).val();
 
@@ -241,6 +250,7 @@ class Table {
             $(this).remove();
             td.html(val);
         });
+        row.attr("isNew", "false");
     }
 
     // Обработка ввода с клавиатуры 
