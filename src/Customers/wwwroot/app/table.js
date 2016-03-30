@@ -40,13 +40,24 @@ var Table = (function () {
         this.BeforeDelete = function () {
             var rowData = new Array();
             var columns = _this.columns;
-            _this.obj.find('.highlight > td').each(function (index, value) {
-                rowData[columns[index].name] = $(this).html();
-            });
+            if (_this.inEditing) {
+                _this.obj.find('.tableinput').each(function (index, value) {
+                    rowData[columns[index].name] = $(this).val();
+                });
+            }
+            else {
+                _this.obj.find('.highlight > td').each(function (index, value) {
+                    rowData[columns[index].name] = $(this).html();
+                });
+            }
             var event = new CustomEvent(_this.name + "_BeforeDelete", { 'detail': rowData });
             _this.elem.dispatchEvent(event);
         };
         this.Edit = function () {
+            if (_this.inEditing) {
+                _this.obj.find(".tableinput").first().focus();
+                return;
+            }
             _this.EditCell(null);
         };
         this.EditCell = function (_row, currentcell) {
@@ -56,9 +67,8 @@ var Table = (function () {
             var columns = _this.columns;
             var isEditable = _this.isEditable;
             var row;
-            //var SetAutoComplete = this.SetAutoComplete;
             if (_row == null)
-                row = $(_this.idSelector + ' .highlight');
+                row = _this.obj.find(' .highlight');
             else
                 row = _row;
             var table = _this;
@@ -109,13 +119,19 @@ var Table = (function () {
             _this.elem.dispatchEvent(event);
         };
         this.WasChanged = function () {
+            var res = false;
             _this.obj.find(".tableinput").each(function (index, value) {
-                if ($(this).attr("prevVal") != $(this).val())
-                    return true;
+                if ($(this).attr("prevVal") != $(this).val()) {
+                    res = true;
+                }
             });
-            return false;
+            return res;
         };
         this.Add = function () {
+            if (_this.inEditing) {
+                _this.obj.find(".tableinput").first().focus();
+                return;
+            }
             // Удалим пустую строку в пустой таблице
             $('.EmptyTable tr:last').first().remove();
             $('.EmptyTable').removeClass("EmptyTable");
@@ -189,17 +205,18 @@ var Table = (function () {
             }
             else if (e.keyCode == keyCodes.ENTER) {
                 e.preventDefault();
-                _this.Edit();
+                if (_this.isEditable)
+                    _this.Edit();
             }
         };
         this.DocClick = function (e) {
-            if (_this.inEditing && (!(e.toElement.classList.contains(".tableinput")))) {
+            if (_this.inEditing && (!(e.toElement.classList.contains("tableinput")))) {
                 if (_this.WasChanged()) {
                     e.preventDefault();
-                    _this.obj.find(".tableinput").first().focus();
                 }
-                else
+                else {
                     _this.EndEditing(undefined);
+                }
             }
         };
         // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
@@ -230,7 +247,8 @@ var Table = (function () {
         // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
         this.DblClickOnRow = function (e) {
             e.preventDefault();
-            _this.Edit();
+            if (_this.isEditable)
+                _this.Edit();
         };
         this.name = name;
         this.isEditable = isEditable;

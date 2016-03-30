@@ -93,9 +93,16 @@ class Table {
     public BeforeDelete = () => {
         var rowData = new Array();
         var columns = this.columns;
-        this.obj.find('.highlight > td').each(function (index, value) {
-            rowData[columns[index].name] = $(this).html();
-        });
+        if (this.inEditing) {
+            this.obj.find('.tableinput').each(function (index, value) {
+                rowData[columns[index].name] = $(this).val();
+            });
+        }
+        else {
+            this.obj.find('.highlight > td').each(function (index, value) {
+                rowData[columns[index].name] = $(this).html();
+            });
+        }
         var event = new CustomEvent(this.name + "_BeforeDelete", { 'detail': rowData });
         this.elem.dispatchEvent(event);
     };
@@ -107,6 +114,10 @@ class Table {
 
 
     public Edit = () => {
+        if (this.inEditing) {
+            this.obj.find(".tableinput").first().focus();
+            return;
+        }
         this.EditCell(null);
     }
 
@@ -117,7 +128,7 @@ class Table {
         var isEditable = this.isEditable;
         var row: JQuery;
         if (_row == null)
-            row = $(this.idSelector + ' .highlight');
+            row = this.obj.find(' .highlight');
         else row = _row;
         var table = this;
 
@@ -172,14 +183,21 @@ class Table {
     }
 
     public WasChanged = () => {
+        var res: boolean = false;
         this.obj.find(".tableinput").each(function (index, value) {
-            if ($(this).attr("prevVal") != $(this).val())
-                return true; 
+            if ($(this).attr("prevVal") != $(this).val()) {
+                res = true;
+            }
         });
-        return false;
+        return res;
     }
 
     public Add = () => {
+
+        if (this.inEditing) {
+            this.obj.find(".tableinput").first().focus();
+            return;
+        }
 
         // Удалим пустую строку в пустой таблице
         $('.EmptyTable tr:last').first().remove();
@@ -273,18 +291,18 @@ class Table {
 
         else if (e.keyCode == keyCodes.ENTER) {
             e.preventDefault();
-            this.Edit();
+            if (this.isEditable) this.Edit();
         }
     };
 
     DocClick = (e: MouseEvent) => {
-        if (this.inEditing && (!(e.toElement.classList.contains(".tableinput")))) {
+        if (this.inEditing && (!(e.toElement.classList.contains("tableinput")))) {
             if (this.WasChanged()) {
                 e.preventDefault();
-                this.obj.find(".tableinput").first().focus();
             }
-            else
+            else {
                 this.EndEditing(undefined);
+            }
         } 
     }
 
@@ -329,6 +347,6 @@ class Table {
     // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
     DblClickOnRow = (e: MouseEvent) => {
         e.preventDefault();
-        this.Edit();
+        if (this.isEditable) this.Edit();
     };
 }
