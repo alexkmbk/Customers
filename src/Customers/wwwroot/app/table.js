@@ -72,40 +72,43 @@ var Table = (function () {
             else
                 row = _row;
             var table = _this;
-            row.find("td").each(function (index, value) {
-                var cell = $(this);
-                var val;
-                var input;
-                var col = columns[index];
-                // Обработка непонятной ситуации, когда, почему-то 
-                // остается не удаленным элемент редактирования
-                if (cell.find("input").length != 0) {
-                    input = cell.find("input");
-                    val = input.val();
-                    if (col.isAutoComplete) {
-                        $(this).autocomplete("destroy");
-                        $(this).removeData('autocomplete');
-                    }
-                    input.remove();
-                    cell.html("");
-                }
-                else
+            if (columns) {
+                row.find("td").each(function (index, value) {
+                    var cell = $(this);
+                    var val;
+                    var input;
                     val = cell.html();
-                rowData[col.name] = val;
-                if (isEditable) {
-                    input = $(document.createElement('input'));
-                    input.attr("id", col.name + "_input");
-                    input.attr("value", val);
-                    input.attr("prevVal", val);
-                    input.attr("type", col.isVisible ? "text" : "hidden");
-                    input.addClass("tableinput");
-                    cell.html("");
-                    cell.append(input);
-                    if (col.isAutoComplete) {
-                        SetAutoComplete(input, col, table);
+                    var col = columns[index];
+                    if (isEditable) {
+                        // Обработка непонятной ситуации, когда, почему-то 
+                        // остается не удаленным элемент редактирования
+                        if (cell.find("input").length != 0) {
+                            input = cell.find("input");
+                            val = input.val();
+                            if (col.isAutoComplete) {
+                                $(this).autocomplete("destroy");
+                                $(this).removeData('autocomplete');
+                            }
+                            input.remove();
+                            cell.html("");
+                        }
                     }
-                }
-            });
+                    rowData[col.name] = val;
+                    if (isEditable) {
+                        input = $(document.createElement('input'));
+                        input.attr("id", col.name + "_input");
+                        input.attr("value", val);
+                        input.attr("prevVal", val);
+                        input.attr("type", col.isVisible ? "text" : "hidden");
+                        input.addClass("tableinput");
+                        cell.html("");
+                        cell.append(input);
+                        if (col.isAutoComplete) {
+                            SetAutoComplete(input, col, table);
+                        }
+                    }
+                });
+            }
             if (isEditable) {
                 if (currentcell == null) {
                     row.find("input").first().focus();
@@ -146,6 +149,7 @@ var Table = (function () {
             _this.elem.dispatchEvent(event);
         };
         this.EndEditing = function (ColIdValue) {
+            _this.inEditing = false;
             var columns = _this.columns;
             if (ColIdValue)
                 $("#" + _this.IdColumn.name + "_input").val(ColIdValue);
@@ -205,8 +209,7 @@ var Table = (function () {
             }
             else if (e.keyCode == keyCodes.ENTER) {
                 e.preventDefault();
-                if (_this.isEditable)
-                    _this.Edit();
+                _this.Edit();
             }
         };
         this.DocClick = function (e) {
@@ -247,8 +250,7 @@ var Table = (function () {
         // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
         this.DblClickOnRow = function (e) {
             e.preventDefault();
-            if (_this.isEditable)
-                _this.Edit();
+            _this.Edit();
         };
         this.name = name;
         this.isEditable = isEditable;
@@ -259,6 +261,8 @@ var Table = (function () {
         this.inEditing = false;
         this.parentForm = parentForm;
         this.IdColumn = IdColumn;
+        //$(this.idSelector + "_div").css("height", "100vh");
+        //$(this.idSelector + "_div").css("overflow", "auto");
         var parent = $(this.elem.parentNode);
         parent.on('keydown', this.idSelector + '_input', this.Keydown);
         this.obj.on('click', "tbody", this.Click);

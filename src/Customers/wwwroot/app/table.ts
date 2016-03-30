@@ -74,6 +74,10 @@ class Table {
         this.inEditing = false;
         this.parentForm = parentForm;
         this.IdColumn = IdColumn;
+
+        //$(this.idSelector + "_div").css("height", "100vh");
+        //$(this.idSelector + "_div").css("overflow", "auto");
+
         var parent: JQuery = $(this.elem.parentNode);
 
         parent.on('keydown', this.idSelector + '_input', this.Keydown);
@@ -132,43 +136,45 @@ class Table {
         else row = _row;
         var table = this;
 
-        row.find("td").each(function (index, value) {
-            var cell = $(this);
-            var val;
-            var input: JQuery;
-            var col: Column = columns[index];
-            // Обработка непонятной ситуации, когда, почему-то 
-            // остается не удаленным элемент редактирования
-            if (cell.find("input").length != 0) {
-                input = cell.find("input");
-                val = input.val();
-                if (col.isAutoComplete) {
-                    $(this).autocomplete("destroy");
-                    $(this).removeData('autocomplete');
-                }
-                input.remove(); 
-                cell.html("");    
-            }
-            else
+        if (columns) {
+
+            row.find("td").each(function (index, value) {
+                var cell = $(this);
+                var val;
+                var input: JQuery;
                 val = cell.html();
-
-            rowData[col.name] = val;
-
-            if (isEditable) {
-                input = $(document.createElement('input'));
-                input.attr("id", col.name + "_input");
-                input.attr("value", val);
-                input.attr("prevVal", val);
-                input.attr("type", col.isVisible ? "text" : "hidden");
-                input.addClass("tableinput");
-                cell.html("");
-                cell.append(input);
-                if (col.isAutoComplete) {
-                    SetAutoComplete(input, col, table);
+                var col: Column = columns[index];
+                if (isEditable) {
+                    // Обработка непонятной ситуации, когда, почему-то 
+                    // остается не удаленным элемент редактирования
+                    if (cell.find("input").length != 0) {
+                        input = cell.find("input");
+                        val = input.val();
+                        if (col.isAutoComplete) {
+                            $(this).autocomplete("destroy");
+                            $(this).removeData('autocomplete');
+                        }
+                        input.remove();
+                        cell.html("");
+                    }
                 }
-            }
-        });
+                rowData[col.name] = val;
 
+                if (isEditable) {
+                    input = $(document.createElement('input'));
+                    input.attr("id", col.name + "_input");
+                    input.attr("value", val);
+                    input.attr("prevVal", val);
+                    input.attr("type", col.isVisible ? "text" : "hidden");
+                    input.addClass("tableinput");
+                    cell.html("");
+                    cell.append(input);
+                    if (col.isAutoComplete) {
+                        SetAutoComplete(input, col, table);
+                    }
+                }
+            });
+        }
         if (isEditable) {
             if (currentcell == null) {
                 row.find("input").first().focus();
@@ -217,6 +223,7 @@ class Table {
     }
 
     public EndEditing = (ColIdValue) => {
+        this.inEditing = false;
         var columns = this.columns;
         if (ColIdValue) $("#" + this.IdColumn.name + "_input").val(ColIdValue);
         this.obj.find(".tableinput").parent().parent().find("input").each(function (index, value) {
@@ -291,7 +298,7 @@ class Table {
 
         else if (e.keyCode == keyCodes.ENTER) {
             e.preventDefault();
-            if (this.isEditable) this.Edit();
+            this.Edit();
         }
     };
 
@@ -347,6 +354,6 @@ class Table {
     // двойной клик по ячейке таблицы, проиходсит вход в режим редактирования
     DblClickOnRow = (e: MouseEvent) => {
         e.preventDefault();
-        if (this.isEditable) this.Edit();
+        this.Edit();
     };
 }
