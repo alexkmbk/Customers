@@ -2,7 +2,7 @@
 ///<reference path="../lib/jquery/jquery.d.ts" />
 System.register(["./banks_choice_dialog"], function(exports_1) {
     var BanksChoiceDialog;
-    var autoComplete, input, dlg, saving, isNew, customerId, accountdialog_table;
+    var autoComplete, input, dlg, saving, isNew, customerId, accountdialog_table, parentForm;
     function SetDialogActive(dlg, data) {
         $('#bankaccounts_table_div :input').removeAttr('disabled');
         $('#bankaccounts_table_div').removeClass('disabled');
@@ -11,7 +11,7 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
     }
     function InitDialog() {
         dlg.dialog({
-            width: "50%",
+            width: "60%",
             beforeClose: function (e, ui) {
                 // если нажата клавиша ESC и выполняется редактирование ячейки,
                 // то необходимо завершить редактирование не сохраняя введенные данные
@@ -35,7 +35,7 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
         panel.find("input[name='DeleteButton']").get(0).onclick = accountdialog_table.BeforeDelete;
         $("#form_customer").get(0).onsubmit = SaveAndClose;
         //Удалить запись
-        $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_BeforeDelete", function (e) {
+        dlg.get(0).addEventListener("bankaccounts_table_BeforeDelete", function (e) {
             var rowdata = e.detail;
             $.ajax({
                 type: 'POST',
@@ -56,7 +56,7 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
                 }
             });
         });
-        $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_SaveTable", function (e) {
+        dlg.get(0).addEventListener("bankaccounts_table_SaveTable", function (e) {
             var action;
             var rowdata;
             if (saving)
@@ -92,7 +92,7 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
                 }
             });
         });
-        $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_ChoiceFormClick_BankName", function (e) {
+        accountdialog_table.elem.addEventListener("bankaccounts_table_ChoiceFormClick_BankName", function (e) {
             BanksChoiceDialog.OpenBanksChoiceDialog($("#dialog_Banks"), function (rowData) {
                 accountdialog_table.SetInputValue("BankId", rowData["BankId"]);
                 accountdialog_table.SetInputValue("BankName", rowData["BankName"]);
@@ -103,11 +103,12 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
         });
     }
     // Открывает диалог редактирования свойств
-    function OpenEditDialog(_isNew, _CustomerId, CustomerName, BusinessTypeName) {
+    function OpenEditDialog(_isNew, _CustomerId, CustomerName, BusinessTypeName, _parentForm) {
         if (_CustomerId === void 0) { _CustomerId = null; }
         if (CustomerName === void 0) { CustomerName = null; }
         if (BusinessTypeName === void 0) { BusinessTypeName = null; }
-        var myDiv = document.getElementById("dialog_customer_divmsg").innerHTML = "";
+        parentForm = _parentForm;
+        document.getElementById("dialog_customer_divmsg").innerHTML = "";
         // Удалим ранее созданный диалог, чтобы очистить все свойства
         if (dlg.hasClass('ui-dialog-content')) {
             dlg.dialog('destroy');
@@ -209,6 +210,8 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
                             SetDialogActive(dlg, data);
                         }
                     }
+                    var event = new CustomEvent("customers_table_AfterSave");
+                    parentForm.dispatchEvent(event);
                 }
                 else {
                     //Если запрос обработан, но произошла ошибка, то устанавливаем текст ошибки в элементе dialog_customer_divmsg

@@ -1,11 +1,11 @@
 ﻿///<reference path="../lib/jquery/jqueryui.d.ts" />
 ///<reference path="../lib/jquery/jquery.d.ts" />
 
+var banks_table: Table;
 
 function BankChoiceForm_InitDialog(parent: JQuery, banksdlg: JQuery, PickEventHandler: Function, CloseDialogHandler: Function) {
 
     banksdlg.attr('title', 'Выбор банка');
-
     banksdlg.dialog({
         modal: true,
         width: "50%",
@@ -20,14 +20,16 @@ function BankChoiceForm_InitDialog(parent: JQuery, banksdlg: JQuery, PickEventHa
         new Column({ name: "BankName", isVisible: true }),
         new Column({ name: "BankId", isVisible: false }),
         new Column({ name: "BankAccountId", isVisible: false })];
-    var banks_table = new Table("banks_table", false, cols, banksdlg, cols[3], 200);
+    banks_table = new Table("banks_table", false, cols, banksdlg, cols[3], 200);
 
     $("#banks_panel").find("input[name='Choice']").get(0).onclick = banks_table.Edit;
 
     //Выбор
-    $('#banks_table').get(0).addEventListener("banks_table_Pick", function (e: any) {
+    banksdlg.get(0).addEventListener("banks_table_Pick", function (e: any) {
         banksdlg.dialog("close");
+        banksdlg.dialog("destroy");
         PickEventHandler(e.detail);
+        banks_table = null;
     });
   
 }

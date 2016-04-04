@@ -53,7 +53,7 @@ var Table = (function () {
                 });
             }
             var event = new CustomEvent(_this.name + "_BeforeDelete", { 'detail': rowData });
-            _this.elem.dispatchEvent(event);
+            _this.parentForm.get(0).dispatchEvent(event);
         };
         this.Edit = function () {
             if (_this.inEditing) {
@@ -144,7 +144,7 @@ var Table = (function () {
                 _this.inEditing = true;
             }
             var event = new CustomEvent(_this.name + "_Pick", { 'detail': rowData });
-            _this.elem.dispatchEvent(event);
+            _this.parentForm.get(0).dispatchEvent(event);
         };
         this.WasChanged = function () {
             var res = false;
@@ -172,7 +172,7 @@ var Table = (function () {
             _this.obj.find('tr:last').first().after(emptyRowStr);
             _this.EditCell(_this.obj.find('tr:last').first(), null, true);
             var event = new CustomEvent(_this.name + "_New");
-            _this.elem.dispatchEvent(event);
+            _this.parentForm.get(0).dispatchEvent(event);
         };
         this.EndEditing = function (ColIdValue) {
             _this.inEditing = false;
@@ -196,6 +196,7 @@ var Table = (function () {
                 td.html(val);
             });
             row.attr("isNew", "false");
+            row.addClass('highlight');
         };
         // Обработка ввода с клавиатуры 
         this.InputKeydown = function (e) {
@@ -216,7 +217,7 @@ var Table = (function () {
                         rowData[columns[index].name] = $(this).val();
                     });
                     var event = new CustomEvent(_this.name + "_SaveTable", { 'detail': rowData });
-                    _this.elem.dispatchEvent(event);
+                    _this.parentForm.get(0).dispatchEvent(event);
                     $(_this.idSelector + "_input").focus();
                 }
             }
@@ -226,11 +227,11 @@ var Table = (function () {
             // перемещение фокуса строки на одну строку вниз
             if (e.keyCode == keyCodes.DOWN_ARROW) {
                 e.preventDefault();
-                $(_this.idSelector + ' .highlight').next().addClass('highlight').siblings().removeClass('highlight');
+                _this.obj.find('.highlight').next().addClass('highlight').siblings().removeClass('highlight');
             }
             else if (e.keyCode == keyCodes.UP_ARROW) {
                 e.preventDefault();
-                $(_this.idSelector + ' .highlight').prev().addClass('highlight').siblings().removeClass('highlight');
+                _this.obj.find('.highlight').prev().addClass('highlight').siblings().removeClass('highlight');
             }
             else if (e.keyCode == keyCodes.INSERT) {
                 e.preventDefault();
@@ -238,7 +239,7 @@ var Table = (function () {
             }
             else if (e.keyCode == keyCodes.DELETE) {
                 e.preventDefault();
-                _this.Delete();
+                _this.BeforeDelete();
             }
             else if (e.keyCode == keyCodes.ENTER) {
                 e.preventDefault();
@@ -256,6 +257,15 @@ var Table = (function () {
             if (_this.inEditing && (!(e.toElement.classList.contains("tableinput")))) {
                 if (_this.WasChanged()) {
                     e.preventDefault();
+                    var inputs = _this.obj.find("input[type!='button']");
+                    var rowData = new Array();
+                    var columns = _this.columns;
+                    inputs.each(function (index, value) {
+                        rowData[columns[index].name] = $(this).val();
+                    });
+                    var event = new CustomEvent(_this.name + "_SaveTable", { 'detail': rowData });
+                    _this.parentForm.get(0).dispatchEvent(event);
+                    $(_this.idSelector + "_input").focus();
                 }
                 else {
                     e.preventDefault();
@@ -319,13 +329,14 @@ var Table = (function () {
         //$(this.idSelector + "_div > .tablebody").css("height", parentForm.height() - distanceTop - 50);
         //$(this.idSelector + "_div > .tablebody").css("overflow", "auto");
         // this.obj.css("overflow", "auto");
-        var obj = this.obj;
-        var bodyCells = obj.find('tbody tr:first').children(), colWidth;
+        //var obj = this.obj;
+        //var bodyCells = obj.find('tbody tr:first').children(), colWidth;
         // Adjust the width of thead cells when window resizes
-        var originalHeight = parentForm.height();
-        var originalHeightTime = new Date();
-        var rowHeight = obj.find("tr:first").height();
-        $(window).resize(function () {
+        /*  var originalHeight = parentForm.height();
+          var originalHeightTime: any = new Date();
+          var rowHeight = obj.find("tr:first").height();*/
+        /* $(window).resize(function () {
+ 
             /* var newTime: any = new Date();
              if (newTime - originalHeightTime < 100)
                  return;
@@ -346,10 +357,10 @@ var Table = (function () {
              obj.find('thead tr').children().each(function (i, v) {
                  $(v).width(colWidth[i]);
              });*/
-        }).resize(); // Trigger resize handler
+        // }).resize(); // Trigger resize handler
         var parent = $(this.elem.parentNode);
         parent.on('keydown', this.idSelector + '_input', this.Keydown);
-        this.obj.on('click', "tbody", this.Click);
+        parent.on('click', this.idSelector + ' > tbody', this.Click);
         parent.on('click', this.idSelector + ' > tbody > tr', this.ClickOnRow);
         parent.on('dblclick', this.idSelector + ' > tbody > tr > td', this.DblClickOnRow);
         parent.on('keydown', '.tableinput', this.InputKeydown);

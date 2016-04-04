@@ -58,7 +58,7 @@ class Table {
     columns: Column[];
     idSelector: string;
     obj: JQuery;
-    elem: HTMLElement;
+    public elem: HTMLElement;
     public inEditing: boolean;
     dontEndEditing: boolean = false;
     autoComplete: JQuery;
@@ -93,17 +93,17 @@ class Table {
 
        // this.obj.css("overflow", "auto");
 
-        var obj = this.obj;
+        //var obj = this.obj;
 
-        var bodyCells = obj.find('tbody tr:first').children(), colWidth;
+        //var bodyCells = obj.find('tbody tr:first').children(), colWidth;
 
         // Adjust the width of thead cells when window resizes
 
-        var originalHeight = parentForm.height();
+      /*  var originalHeight = parentForm.height();
         var originalHeightTime: any = new Date();
-        var rowHeight = obj.find("tr:first").height();
+        var rowHeight = obj.find("tr:first").height();*/
 
-        $(window).resize(function () {
+       /* $(window).resize(function () {
 
            /* var newTime: any = new Date();
             if (newTime - originalHeightTime < 100)
@@ -125,12 +125,12 @@ class Table {
             obj.find('thead tr').children().each(function (i, v) {
                 $(v).width(colWidth[i]);
             });*/
-        }).resize(); // Trigger resize handler
+       // }).resize(); // Trigger resize handler
 
         var parent: JQuery = $(this.elem.parentNode);
 
         parent.on('keydown', this.idSelector + '_input', this.Keydown);
-        this.obj.on('click', "tbody", this.Click);
+        parent.on('click', this.idSelector + ' > tbody', this.Click);
         parent.on('click', this.idSelector + ' > tbody > tr', this.ClickOnRow);
         parent.on('dblclick', this.idSelector + ' > tbody > tr > td', this.DblClickOnRow);
         parent.on('keydown', '.tableinput', this.InputKeydown);
@@ -159,7 +159,7 @@ class Table {
             });
         }
         var event = new CustomEvent(this.name + "_BeforeDelete", { 'detail': rowData });
-        this.elem.dispatchEvent(event);
+        this.parentForm.get(0).dispatchEvent(event);
     };
 
     public Delete() {
@@ -261,7 +261,7 @@ class Table {
             this.inEditing = true;
         }
         var event = new CustomEvent(this.name + "_Pick", { 'detail': rowData });
-        this.elem.dispatchEvent(event);
+        this.parentForm.get(0).dispatchEvent(event);
     }
 
     public WasChanged = () => {
@@ -297,7 +297,7 @@ class Table {
         this.EditCell(this.obj.find('tr:last').first(),null,true);
 
         var event = new CustomEvent(this.name + "_New");
-        this.elem.dispatchEvent(event);
+        this.parentForm.get(0).dispatchEvent(event);
     }
 
     public EndEditing = (ColIdValue?) => {
@@ -325,6 +325,7 @@ class Table {
             td.html(val);
         });
         row.attr("isNew", "false");
+        row.addClass('highlight');
     }
 
     // Обработка ввода с клавиатуры 
@@ -349,7 +350,7 @@ class Table {
                     rowData[columns[index].name] = $(this).val();
                 });
                 var event = new CustomEvent(this.name + "_SaveTable", { 'detail': rowData });
-                this.elem.dispatchEvent(event);
+                this.parentForm.get(0).dispatchEvent(event);
                 $(this.idSelector + "_input").focus();
             }
         }
@@ -360,13 +361,13 @@ class Table {
         // перемещение фокуса строки на одну строку вниз
         if (e.keyCode == keyCodes.DOWN_ARROW) {
             e.preventDefault();
-            $(this.idSelector + ' .highlight').next().addClass('highlight').siblings().removeClass('highlight');
+            this.obj.find('.highlight').next().addClass('highlight').siblings().removeClass('highlight');
         }
 
         // перемещение фокуса строки на одну строку вверх
         else if (e.keyCode == keyCodes.UP_ARROW) {
             e.preventDefault();
-            $(this.idSelector + ' .highlight').prev().addClass('highlight').siblings().removeClass('highlight');
+            this.obj.find('.highlight').prev().addClass('highlight').siblings().removeClass('highlight');
         }
   
         // INSERT
@@ -378,7 +379,7 @@ class Table {
         // DELETE
         else if (e.keyCode == keyCodes.DELETE) {
             e.preventDefault();
-            this.Delete();
+            this.BeforeDelete();
         }
 
         else if (e.keyCode == keyCodes.ENTER) {
@@ -401,6 +402,15 @@ class Table {
         if (this.inEditing && (!(e.toElement.classList.contains("tableinput")))) {
             if (this.WasChanged()) {
                 e.preventDefault();
+                var inputs = this.obj.find("input[type!='button']");
+                var rowData = new Array();
+                var columns = this.columns;
+                inputs.each(function (index, value) {
+                    rowData[columns[index].name] = $(this).val();
+                });
+                var event = new CustomEvent(this.name + "_SaveTable", { 'detail': rowData });
+                this.parentForm.get(0).dispatchEvent(event);
+                $(this.idSelector + "_input").focus();
             }
             else {
                 e.preventDefault();
@@ -412,13 +422,12 @@ class Table {
 
     // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
     Click = (e: MouseEvent) => {
-        
+
         if (e.toElement.classList.contains("ChoiceFormButton")) {
             return;
         }
-
-        if ((e.toElement.id == this.name || $(e.toElement).parents().length) && ($(e.target).prop("tagName").toLowerCase()!="input")) {
-                $(this.idSelector + '_input').focus();
+        if ((e.toElement.id == this.name || $(e.toElement).parents().length) && ($(e.target).prop("tagName").toLowerCase() != "input")) {
+            $(this.idSelector + '_input').focus();
             }
     };
 
