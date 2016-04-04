@@ -2,7 +2,7 @@
 
 <h4>@Html.ViewData["Title"]</h4>
 
-<div id="bankaccounts_panel">
+<div id="bankaccounts_panel" class="group_row header">
     <input name = "NewButton" type="button" value="Добавить"  autofocus class="btn btn-default" />
     <input name = "EditButton" type="button" value="Изменить" class="btn btn-default" />
     <input name = "DeleteButton" type="button" value="Удалить" class="btn btn-default" />
@@ -24,31 +24,33 @@
         </thead>
         <tbody>
             <tr>
-                <td></td><td></td>
+                <td></td>
+                <td></td>
             </tr>
         </tbody>
     </table>
 }
 else {
-        <table id="bankaccounts_table"class="table table-striped table-bordered table-condensed">
+        <table id="bankaccounts_table"class="table table-striped table-bordered table-condensed scroll">
             <thead>
                 <tr>
                     <th>Номер счета</th>
                     <th>Банк</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach (var e in Model)
+
+                <tbody>
+                    @foreach (var e in Model)
                 {
-                    <tr>
-                        <td>@e.BankAccountNumber</td>
-                        <td>@e.Bank.BankName</td>
-                        <td style="display:none;">@e.Bank.BankId</td>
-                        <td style="display:none;">@e.BankAccountId</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        <tr>
+                            <td>@e.BankAccountNumber</td>
+                            <td>@e.Bank.BankName</td>
+                            <td style="display:none; ">@e.Bank.BankId</td>
+                            <td style="display:none; ">@e.BankAccountId</td>
+                        </tr>
+                    }
+                </tbody>
+</table>
 
    }
 

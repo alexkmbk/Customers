@@ -27,12 +27,13 @@ var Column = (function () {
             this.isAutoComplete = options.isAutoComplete;
             this.AutoCompleteSource = options.AutoCompleteSource;
             this.AutoCompleteID = options.AutoCompleteID;
+            this.isChoiceForm = options.isChoiceForm;
         }
     }
     return Column;
 })();
 var Table = (function () {
-    function Table(name, isEditable, columns, parentForm, IdColumn) {
+    function Table(name, isEditable, columns, parentForm, IdColumn, height) {
         var _this = this;
         if (columns === void 0) { columns = null; }
         if (parentForm === void 0) { parentForm = null; }
@@ -105,6 +106,27 @@ var Table = (function () {
                         input.addClass("tableinput");
                         cell.html("");
                         cell.append(input);
+                        // Если есть форма выбора, добавим кнопку собработчиком нажатия
+                        if (col.isChoiceForm) {
+                            var colName = col.name;
+                            var button = $(document.createElement('input'));
+                            button.attr("type", "button");
+                            //button.css("margin-left", -30);
+                            //button.css("margin-top", 3);
+                            button.val("...");
+                            button.addClass("ChoiceFormButton");
+                            var height = 25; //input.height();
+                            button.width(height);
+                            button.height(height);
+                            button.on("click", function (e) {
+                                e.preventDefault();
+                                table.choiceFormIsOpen = true;
+                                var event = new CustomEvent(table.name + "_ChoiceFormClick_" + col.name);
+                                table.elem.dispatchEvent(event);
+                                return false;
+                            });
+                            cell.append(button);
+                        }
                         cell.parent().attr("isNew", isNew ? "true" : "false");
                         if (col.isAutoComplete) {
                             SetAutoComplete(input, col, table);
@@ -182,14 +204,14 @@ var Table = (function () {
                 e.preventDefault();
                 var input = $(e.target);
                 var td = input.parent();
-                if (td.parent().children().index(td) < td.parent().find("input[type!='hidden']").length - 1) {
-                    td.next('td').find("input").first().focus();
+                if (td.parent().children().index(td) < td.parent().find("input[type!='hidden'][type!='button']").length - 1) {
+                    td.next('td').find("input[type!='button']").first().focus();
                 }
                 else {
                     var row = input.parent().parent();
                     var rowData = new Array();
                     var columns = _this.columns;
-                    td.parent().find("input").each(function (index, value) {
+                    td.parent().find("input[type!='button']").each(function (index, value) {
                         //rowdata[index] = $(this).val();
                         rowData[columns[index].name] = $(this).val();
                     });
@@ -224,6 +246,9 @@ var Table = (function () {
             }
         };
         this.DocClick = function (e) {
+            if (_this.choiceFormIsOpen || e.toElement.classList.contains("ChoiceFormButton")) {
+                return;
+            }
             if (_this.dontEndEditing) {
                 _this.dontEndEditing = false;
                 return;
@@ -233,18 +258,26 @@ var Table = (function () {
                     e.preventDefault();
                 }
                 else {
+                    e.preventDefault();
                     _this.EndEditing(undefined);
+                    return false;
                 }
             }
         };
         // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
         this.Click = function (e) {
+            if (e.toElement.classList.contains("ChoiceFormButton")) {
+                return;
+            }
             if ((e.toElement.id == _this.name || $(e.toElement).parents().length) && ($(e.target).prop("tagName").toLowerCase() != "input")) {
                 $(_this.idSelector + '_input').focus();
             }
         };
         // подсвечивание строки
         this.ClickOnRow = function (e) {
+            if (e.toElement.classList.contains("ChoiceFormButton")) {
+                return;
+            }
             var target = $(e.target);
             var tagName = target.prop("tagName").toLowerCase();
             var targetRow;
@@ -276,8 +309,44 @@ var Table = (function () {
         this.inEditing = false;
         this.parentForm = parentForm;
         this.IdColumn = IdColumn;
-        //$(this.idSelector + "_div").css("height", "100vh");
-        //$(this.idSelector + "_div").css("overflow", "auto");
+        var scrollTop = parentForm.scrollTop();
+        var elementOffset = this.obj.offset().top;
+        var distanceTop = (elementOffset - scrollTop);
+        this.obj.height(height);
+        this.choiceFormIsOpen = false;
+        //alert("distanceTop=" + distanceTop + ", parentForm.height()=" + parentForm.height() + ", this.obj.height()=" + this.obj.height());
+        //alert(parentForm.height() - distanceTop);
+        //$(this.idSelector + "_div > .tablebody").css("height", parentForm.height() - distanceTop - 50);
+        //$(this.idSelector + "_div > .tablebody").css("overflow", "auto");
+        // this.obj.css("overflow", "auto");
+        var obj = this.obj;
+        var bodyCells = obj.find('tbody tr:first').children(), colWidth;
+        // Adjust the width of thead cells when window resizes
+        var originalHeight = parentForm.height();
+        var originalHeightTime = new Date();
+        var rowHeight = obj.find("tr:first").height();
+        $(window).resize(function () {
+            /* var newTime: any = new Date();
+             if (newTime - originalHeightTime < 100)
+                 return;
+             var newHeight = parentForm.height();
+             var change = newHeight - originalHeight;
+ 
+             obj.height(obj.height() + change);
+ 
+             originalHeight = newHeight;
+             originalHeightTime = newTime;
+             //obj.find("tr").height(rowHeight);
+             // Get the tbody columns width array
+             /*colWidth = bodyCells.map(function () {
+                 return $(this).width();
+             }).get();
+     
+             // Set the width of thead columns
+             obj.find('thead tr').children().each(function (i, v) {
+                 $(v).width(colWidth[i]);
+             });*/
+        }).resize(); // Trigger resize handler
         var parent = $(this.elem.parentNode);
         parent.on('keydown', this.idSelector + '_input', this.Keydown);
         this.obj.on('click', "tbody", this.Click);
@@ -288,6 +357,9 @@ var Table = (function () {
         //Выделим первую строку
         this.obj.find('tbody > tr').first().addClass('highlight');
     }
+    Table.prototype.SetInputValue = function (ColName, value) {
+        this.obj.find('#' + ColName + '_input').val(value);
+    };
     Table.prototype.Delete = function () {
         this.obj.find('.highlight > td').remove();
         this.obj.find('tbody > tr').first().addClass('highlight');

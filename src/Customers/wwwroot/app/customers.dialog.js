@@ -1,24 +1,15 @@
 ///<reference path="../lib/jquery/jqueryui.d.ts" />
 ///<reference path="../lib/jquery/jquery.d.ts" />
-System.register([], function(exports_1) {
+System.register(["./banks_choice_dialog"], function(exports_1) {
+    var BanksChoiceDialog;
     var autoComplete, input, dlg, saving, isNew, customerId, accountdialog_table;
     function SetDialogActive(dlg, data) {
         $('#bankaccounts_table_div :input').removeAttr('disabled');
         $('#bankaccounts_table_div').removeClass('disabled');
-        dlg.attr("isNew", "false");
+        isNew = false;
         dlg.dialog('option', 'title', "Контрагент " + $("#form_customer input[name='CustomerName']").val());
     }
     function InitDialog() {
-        var cols = [new Column({ name: "BankAccountNumber", isVisible: true }),
-            new Column({ name: "BankName", isVisible: true, isAutoComplete: true, AutoCompleteSource: "Customers/GetAutocompleteBankList", AutoCompleteID: "BankId" }),
-            new Column({ name: "BankId", isVisible: false }),
-            new Column({ name: "BankAccountId", isVisible: false })];
-        accountdialog_table = new Table("bankaccounts_table", true, cols, dlg, cols[3]);
-        var panel = $("#bankaccounts_panel");
-        panel.find("input[name='NewButton']").get(0).onclick = accountdialog_table.Add;
-        panel.find("input[name='EditButton']").get(0).onclick = accountdialog_table.Edit;
-        panel.find("input[name='DeleteButton']").get(0).onclick = accountdialog_table.BeforeDelete;
-        var dlgform = $("#form_customer").get(0).onsubmit = SaveAndClose;
         dlg.dialog({
             width: "50%",
             beforeClose: function (e, ui) {
@@ -33,6 +24,16 @@ System.register([], function(exports_1) {
                 }
             }
         });
+        var cols = [new Column({ name: "BankAccountNumber", isVisible: true }),
+            new Column({ name: "BankName", isVisible: true, isAutoComplete: true, AutoCompleteSource: "Customers/GetAutocompleteBankList", AutoCompleteID: "BankId", isChoiceForm: true }),
+            new Column({ name: "BankId", isVisible: false }),
+            new Column({ name: "BankAccountId", isVisible: false })];
+        accountdialog_table = new Table("bankaccounts_table", true, cols, dlg, cols[3], 200);
+        var panel = $("#bankaccounts_panel");
+        panel.find("input[name='NewButton']").get(0).onclick = accountdialog_table.Add;
+        panel.find("input[name='EditButton']").get(0).onclick = accountdialog_table.Edit;
+        panel.find("input[name='DeleteButton']").get(0).onclick = accountdialog_table.BeforeDelete;
+        var dlgform = $("#form_customer").get(0).onsubmit = SaveAndClose;
         //Удалить запись
         $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_BeforeDelete", function (e) {
             var rowdata = e.detail;
@@ -91,6 +92,15 @@ System.register([], function(exports_1) {
                 }
             });
         });
+        $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_ChoiceFormClick_BankName", function (e) {
+            BanksChoiceDialog.OpenBanksChoiceDialog($("#dialog_Banks"), function (rowData) {
+                accountdialog_table.SetInputValue("BankId", rowData["BankId"]);
+                accountdialog_table.SetInputValue("BankName", rowData["BankName"]);
+            }, function () {
+                accountdialog_table.choiceFormIsOpen = false;
+            });
+            return false;
+        });
     }
     // Открывает диалог редактирования свойств
     function OpenEditDialog(_isNew, _CustomerId, CustomerName, BusinessTypeName) {
@@ -112,7 +122,7 @@ System.register([], function(exports_1) {
         else
             dlg.attr('title', 'Создание нового контрагента');
         // устанавливаем признак что запись уже существует, просто редактируем
-        dlg.attr('isNew', +_isNew);
+        //dlg.attr('isNew', +_isNew);
         isNew = _isNew;
         // установим атрибут со значением ID чтобы обновить потом запись в БД
         $.ajax({
@@ -173,11 +183,11 @@ System.register([], function(exports_1) {
         // Здесь по атрибуту isNew, определяется что это новая запись или уже существующая
         // в зависимости от этого будет вызываться различный метод контроллера: Add или Update
         var action;
-        var isNew = document.getElementById('dialog_customer').getAttribute("isNew");
-        if (isNew == "true")
+        if (isNew)
             action = 'Customers/Add';
         else
             action = 'Customers/Update?CustomerId=' + customerId;
+        alert(action);
         var msg = $('#form_customer').serialize();
         $.ajax({
             type: 'POST',
@@ -186,17 +196,15 @@ System.register([], function(exports_1) {
             success: function (data) {
                 // Если запрос выполнен без ошибок то присваиваем полученный с сервера html код, элементу customers_table
                 if (data["isOk"]) {
-                    var dlg = $('#dialog_customer');
-                    if (close)
-                        dlg.dialog('close');
                     if (close) {
+                        dlg.dialog('close');
                         $('#customers_table_div').html(data["view"]);
                         $('#customers_table_input').focus();
                         dlg.dialog('destroy');
                     }
                     else {
                         $('#customers_table_div').html(data["view"]);
-                        if (isNew == "true") {
+                        if (isNew) {
                             // Установим все поля ввода банковских счетов активными, поскольку контрагент уже записан в базу
                             SetDialogActive(dlg, data);
                         }
@@ -226,11 +234,14 @@ System.register([], function(exports_1) {
         myDiv.innerHTML = str;
     }
     return {
-        setters:[],
+        setters:[
+            function (BanksChoiceDialog_1) {
+                BanksChoiceDialog = BanksChoiceDialog_1;
+            }],
         execute: function() {
             dlg = $("#dialog_customer");
             saving = false;
-            isNew = true;
+            isNew = false;
             // Обработка ввода с клавиатуры
             // нажатие ENTER в поле CustomerName - переход на следующее поле
             dlg.find("input[name='CustomerName']").keypress(function (e) {

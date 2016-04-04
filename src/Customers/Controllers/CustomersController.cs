@@ -120,6 +120,14 @@ namespace Customers.Controllers
             return View("_Banks", _ctx.Banks.ToList());
         }
 
+
+        // Форма выбора банков
+        [HttpGet]
+        public IActionResult GetBanksChoiceForm()
+        {
+            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("BankChoiceForm", _ctx.Banks.ToList()) });
+        }
+
         // Загрузка банков из файлов Excel
         [HttpPost]
         public IActionResult UploadBanks(ICollection<IFormFile> files)

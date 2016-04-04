@@ -11,7 +11,7 @@ System.register(["./customers.dialog"], function(exports_1) {
             cols = [new Column({ name: "CustomerId", isVisible: false }),
                 new Column({ name: "CustomerName", isVisible: true }),
                 new Column({ name: "BusinessTypeName", isVisible: true })];
-            customers_table = new Table("customers_table", false, cols);
+            customers_table = new Table("customers_table", false, cols, $(window));
             panel = $("#customers_panel");
             panel.find("input[name='AddButton']").get(0).onclick = customers_table.Add;
             panel.find("input[name='EditButton']").get(0).onclick = customers_table.Edit;

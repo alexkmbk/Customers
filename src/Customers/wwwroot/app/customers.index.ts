@@ -7,7 +7,7 @@ var cols: Column[] = [new Column({ name: "CustomerId", isVisible: false }),
     new Column({ name: "CustomerName", isVisible: true }),
     new Column({ name: "BusinessTypeName", isVisible: true })];
 
-var customers_table = new Table("customers_table", false, cols);
+var customers_table = new Table("customers_table", false, cols,$(window));
 
 var panel = $("#customers_panel");
 panel.find("input[name='AddButton']").get(0).onclick = customers_table.Add;

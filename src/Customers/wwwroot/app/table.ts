@@ -9,6 +9,7 @@ interface ColumnOptions {
     isAutoComplete?: boolean;
     AutoCompleteSource?: string;
     AutoCompleteID?: string;
+    isChoiceForm?: boolean;
 }
 
 function SetAutoComplete(input: JQuery, col: Column, table: Table) {
@@ -37,6 +38,7 @@ class Column {
     isAutoComplete: boolean;
     AutoCompleteSource: string;
     AutoCompleteID: string;
+    isChoiceForm: boolean;
     constructor(options: ColumnOptions) {
         if (options) {
             this.name = options.name;
@@ -44,6 +46,7 @@ class Column {
             this.isAutoComplete = options.isAutoComplete; 
             this.AutoCompleteSource = options.AutoCompleteSource;
             this.AutoCompleteID = options.AutoCompleteID;
+            this.isChoiceForm = options.isChoiceForm;
         }
     }
 
@@ -60,10 +63,10 @@ class Table {
     dontEndEditing: boolean = false;
     autoComplete: JQuery;
     public parentForm: JQuery;
-
+    public choiceFormIsOpen: boolean;
     IdColumn: Column;
 
-    constructor(name: string, isEditable: boolean, columns: Column[] = null, parentForm = null, IdColumn: Column = null) {
+    constructor(name: string, isEditable: boolean, columns: Column[] = null, parentForm: JQuery = null, IdColumn: Column = null, height?: number) {
 
 
         this.name = name;
@@ -76,8 +79,53 @@ class Table {
         this.parentForm = parentForm;
         this.IdColumn = IdColumn;
 
-        //$(this.idSelector + "_div").css("height", "100vh");
-        //$(this.idSelector + "_div").css("overflow", "auto");
+        var scrollTop = parentForm.scrollTop();
+        var elementOffset = this.obj.offset().top;
+        var distanceTop = (elementOffset - scrollTop);
+        this.obj.height(height);
+        this.choiceFormIsOpen = false;
+
+        //alert("distanceTop=" + distanceTop + ", parentForm.height()=" + parentForm.height() + ", this.obj.height()=" + this.obj.height());
+        //alert(parentForm.height() - distanceTop);
+        //$(this.idSelector + "_div > .tablebody").css("height", parentForm.height() - distanceTop - 50);
+
+        //$(this.idSelector + "_div > .tablebody").css("overflow", "auto");
+
+       // this.obj.css("overflow", "auto");
+
+        var obj = this.obj;
+
+        var bodyCells = obj.find('tbody tr:first').children(), colWidth;
+
+        // Adjust the width of thead cells when window resizes
+
+        var originalHeight = parentForm.height();
+        var originalHeightTime: any = new Date();
+        var rowHeight = obj.find("tr:first").height();
+
+        $(window).resize(function () {
+
+           /* var newTime: any = new Date();
+            if (newTime - originalHeightTime < 100)
+                return;
+            var newHeight = parentForm.height();
+            var change = newHeight - originalHeight;
+
+            obj.height(obj.height() + change);
+
+            originalHeight = newHeight;
+            originalHeightTime = newTime;
+            //obj.find("tr").height(rowHeight);
+            // Get the tbody columns width array
+            /*colWidth = bodyCells.map(function () {
+                return $(this).width();
+            }).get();
+    
+            // Set the width of thead columns
+            obj.find('thead tr').children().each(function (i, v) {
+                $(v).width(colWidth[i]);
+            });*/
+        }).resize(); // Trigger resize handler
 
         var parent: JQuery = $(this.elem.parentNode);
 
@@ -93,7 +141,9 @@ class Table {
         this.obj.find('tbody > tr').first().addClass('highlight');
       }
 
-    
+    public SetInputValue(ColName: string, value: any) {
+        this.obj.find('#' + ColName + '_input').val(value);
+    }
 
     public BeforeDelete = () => {
         var rowData = new Array();
@@ -167,9 +217,33 @@ class Table {
                     input.attr("value", val);
                     input.attr("prevVal", val);
                     input.attr("type", col.isVisible ? "text" : "hidden");
+
                     input.addClass("tableinput");
                     cell.html("");
                     cell.append(input);
+
+                    // Если есть форма выбора, добавим кнопку собработчиком нажатия
+                    if (col.isChoiceForm) {
+                        var colName = col.name;
+                        var button = $(document.createElement('input'));
+                        button.attr("type", "button");
+                        //button.css("margin-left", -30);
+                        //button.css("margin-top", 3);
+                        button.val("...");
+                        button.addClass("ChoiceFormButton");
+                        var height = 25;//input.height();
+                        button.width(height);
+                        button.height(height);
+                        button.on("click", function (e: MouseEvent) {
+                            e.preventDefault();
+                            table.choiceFormIsOpen = true;
+                            var event = new CustomEvent(table.name + "_ChoiceFormClick_" + col.name);
+                            table.elem.dispatchEvent(event);
+                            return false;
+                        });
+                        cell.append(button);
+                    }
+
                     cell.parent().attr("isNew", isNew?"true":"false");
                     if (col.isAutoComplete) {
                         SetAutoComplete(input, col, table);
@@ -263,18 +337,17 @@ class Table {
             var input: JQuery = $((<Element>e.target));
             var td = input.parent();
             
-            if (td.parent().children().index(td) < td.parent().find("input[type!='hidden']").length - 1) {
-                td.next('td').find("input").first().focus();
+            if (td.parent().children().index(td) < td.parent().find("input[type!='hidden'][type!='button']").length - 1) {
+                td.next('td').find("input[type!='button']").first().focus();
             }
             else {
                 var row = input.parent().parent();
                 var rowData = new Array();
                 var columns = this.columns;
-                td.parent().find("input").each(function (index, value) {
+                td.parent().find("input[type!='button']").each(function (index, value) {
                     //rowdata[index] = $(this).val();
                     rowData[columns[index].name] = $(this).val();
                 });
-
                 var event = new CustomEvent(this.name + "_SaveTable", { 'detail': rowData });
                 this.elem.dispatchEvent(event);
                 $(this.idSelector + "_input").focus();
@@ -316,6 +389,10 @@ class Table {
 
     DocClick = (e:any) => {
 
+        if (this.choiceFormIsOpen||e.toElement.classList.contains("ChoiceFormButton")){
+            return;
+        }
+
         if (this.dontEndEditing) {
             this.dontEndEditing = false;
             return;
@@ -326,7 +403,9 @@ class Table {
                 e.preventDefault();
             }
             else {
+                e.preventDefault();
                 this.EndEditing(undefined);
+                return false;
             }
         } 
     }
@@ -334,6 +413,10 @@ class Table {
     // Устанавливаем фокус на таблицу если щелкнули мышкой внутри таблицы
     Click = (e: MouseEvent) => {
         
+        if (e.toElement.classList.contains("ChoiceFormButton")) {
+            return;
+        }
+
         if ((e.toElement.id == this.name || $(e.toElement).parents().length) && ($(e.target).prop("tagName").toLowerCase()!="input")) {
                 $(this.idSelector + '_input').focus();
             }
@@ -341,6 +424,10 @@ class Table {
 
     // подсвечивание строки
     ClickOnRow = (e: MouseEvent) => {
+
+        if (e.toElement.classList.contains("ChoiceFormButton")) {
+            return;
+        }
 
         var target: JQuery = $(e.target);
         var tagName = target.prop("tagName").toLowerCase();

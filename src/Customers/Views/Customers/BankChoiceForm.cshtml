@@ -1,0 +1,38 @@
+﻿@model IEnumerable<Customers.Models.Bank>
+
+<h1>@ViewBag.Title</h1>
+
+@*Диалог выбора банков*@
+<div id="dialog_banks_choiceform" title="Выбор банка" style="display:none;">
+    <div id="banks_table_div">
+        <a id="banks_table_input" href="#banks_table"></a>
+
+        @if (Model.Count() == 0)
+        {
+            <div>Нет данных для отображения</div>
+        }
+        else {
+            <table id="banks_table" class="table table-striped table-bordered table-condensed scroll">
+                <thead>
+                    <tr>
+                        <th>БИК</th>
+                        <th>Наименование</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model)
+                {
+                        <tr>
+                            <td>@e.BIC</td>
+                            <td>@e.BankName</td>
+                            <td style="display:none;">@e.BankId</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+    <div id="banks_panel">
+        <input name="Choice" type="button" value="Выбрать" class="btn btn-default" />
+    </div>
+</div>

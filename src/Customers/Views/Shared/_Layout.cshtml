@@ -82,17 +82,113 @@
         }
 
         td {
-            padding: 0;
-            padding-right: 0;
-            padding-left: 0;
-            padding-bottom: 0;
-            padding-top: 0;
-            margin-bottom: 0;
-            margin-top: 0;
-            margin-right: 0;
-            margin-left: 0;
-            box-sizing: border-box;
+             height: 30;
+              max-height: 30px;
+
         }
+        td > div{
+            width: 100%; height: 100%; overflow:hidden;
+        }
+        /*
+        table.scroll {
+    border-spacing: 0;
+    border: 2px solid black;
+}
+
+table.scroll tbody,
+table.scroll thead { display: block; }
+
+thead tr th { 
+    height: 30px;
+    line-height: 30px;
+ }
+
+table.scroll tbody {
+    height: 100px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+
+tbody td:last-child, thead th:last-child {
+    border-right: none;
+}
+            */
+
+
+
+/*        .group_col{
+             display: flex;
+             flex-flow: column;
+              max-width: 100%;
+              max-height:100%;
+               align-items: flex-start;
+               height: 100vh;
+        }
+        .group_row{
+             display: flex;
+             flex-flow: row;
+             align-items:stretch;
+        }
+        .content{
+            flex:1 1 auto;
+            overflow:scroll;
+        }
+        tbody{
+            flex:1 1 auto;
+            overflow:auto;
+        }
+        .footer{
+             flex:0 1 auto;
+             position:absolute;
+             bottom: 0;
+        }
+        .header{
+             flex:0 1 auto;
+        }
+
+        html, body {
+            width:100vw;
+            height:100vh;
+            margin: 0;
+        }*/
+
+        .table-container {
+             height: 10em;
+        }
+
+table.scroll {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+    width: 100%;
+}
+table.scroll thead {
+    /* head takes the height it requires, 
+    and it's not scaled when table is resized */
+    flex: 0 0 auto;
+    width: calc(100% - 0.9em);
+}
+
+table.scroll thead:last-child {
+    border-right-style:none;
+}
+
+table.scroll tbody {*/
+    /* body takes all the remaining available space */
+    flex: 1 1 auto;
+    display: block;
+    overflow-y: scroll;
+}
+table.scroll tbody tr {
+    width: 100%;
+}
+table.scroll thead,
+table.scroll tbody tr {
+    display: table;
+    table-layout: fixed;
+}
+
 
         @*Стиль для подсвечивания строки таблицы*@ .table-striped tbody tr.highlight td {
             background-color: bisque;
