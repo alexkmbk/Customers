@@ -33,7 +33,7 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
         panel.find("input[name='NewButton']").get(0).onclick = accountdialog_table.Add;
         panel.find("input[name='EditButton']").get(0).onclick = accountdialog_table.Edit;
         panel.find("input[name='DeleteButton']").get(0).onclick = accountdialog_table.BeforeDelete;
-        var dlgform = $("#form_customer").get(0).onsubmit = SaveAndClose;
+        $("#form_customer").get(0).onsubmit = SaveAndClose;
         //Удалить запись
         $('#bankaccounts_table').get(0).addEventListener("bankaccounts_table_BeforeDelete", function (e) {
             var rowdata = e.detail;
@@ -187,7 +187,6 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
             action = 'Customers/Add';
         else
             action = 'Customers/Update?CustomerId=' + customerId;
-        alert(action);
         var msg = $('#form_customer').serialize();
         $.ajax({
             type: 'POST',
@@ -206,6 +205,7 @@ System.register(["./banks_choice_dialog"], function(exports_1) {
                         $('#customers_table_div').html(data["view"]);
                         if (isNew) {
                             // Установим все поля ввода банковских счетов активными, поскольку контрагент уже записан в базу
+                            customerId = data["CustomerId"];
                             SetDialogActive(dlg, data);
                         }
                     }
