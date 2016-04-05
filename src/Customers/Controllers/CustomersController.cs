@@ -117,9 +117,76 @@ namespace Customers.Controllers
         public IActionResult Banks()
         {
             ViewBag.Title = "Банки";
-            return View("_Banks", _ctx.Banks.ToList());
+            return View("BanksIndex", _ctx.Banks.ToList());
         }
 
+        // Добавление банка
+        [HttpPost]
+        [Authorize]
+        public IActionResult AddBank(string BankName, string BIC)
+        {
+            Bank newBank = new Bank();
+            if (_ctx.Banks.FirstOrDefault(e => e.BIC == BIC) != null)
+            {
+                return Json(new { isOk = false, Errors = $"The Bank with the BIC '{BIC}' already exists" });
+            }
+            newBank.BankName = BankName;
+            newBank.BIC = BIC;
+            _ctx.Banks.Add(newBank);
+            _ctx.SaveChanges();
+
+            Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
+            // контрагентов в виде строки
+            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_CustomersTable", GetCustomers()), BankId = newBank.BankId });
+
+            return View("BanksIndex", _ctx.Banks.ToList());
+        }
+
+        // Обнровление свойств банка
+        [HttpPost]
+        [Authorize]
+        public IActionResult UpdateBank(string BankName, string BIC, int BankId)
+        {
+            Bank bank = new Bank();
+
+            bank = _ctx.Banks.FirstOrDefault(e => e.BankId == BankId);
+            if (bank == null)
+            {
+                return Json(new { isOk = false, Errors = "Не удалось получить банк по ID" });
+            }
+
+            bank.BankName = BankName;
+            bank.BIC = BIC;
+            _ctx.Banks.Update(bank);
+            _ctx.SaveChanges();
+
+            Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
+            // контрагентов в виде строки
+            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_BanksTable", _ctx.Banks.ToList()), BankId = bank.BankId });
+        }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult DeleteBank(int BankId)
+        {
+            Bank bank = new Bank();
+
+            bank = _ctx.Banks.FirstOrDefault(e => e.BankId == BankId);
+            if (bank == null)
+            {
+                return Json(new { isOk = false, Errors = "Не удалось получить банк по ID" });
+            }
+
+             _ctx.Banks.Remove(bank);
+            _ctx.SaveChanges();
+
+            Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            // Возвращаем результат в виде JSON структуры, в параметре view передается html обновленной таблицы
+            // контрагентов в виде строки
+            return Json(new { isOk = true, Errors = "", view = RenderPartialViewToString("_BanksTable", _ctx.Banks.ToList()), BankId = bank.BankId });
+        }
 
         // Форма выбора банков
         [HttpGet]

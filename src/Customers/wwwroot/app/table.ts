@@ -174,6 +174,8 @@ class Table {
             return;
         }
         this.EditCell(null);
+        this.dontEndEditing = true;
+        return false;
     }
 
 

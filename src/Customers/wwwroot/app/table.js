@@ -61,6 +61,8 @@ var Table = (function () {
                 return;
             }
             _this.EditCell(null);
+            _this.dontEndEditing = true;
+            return false;
         };
         this.EditCell = function (_row, currentcell, isNew) {
             if (_row === void 0) { _row = null; }
